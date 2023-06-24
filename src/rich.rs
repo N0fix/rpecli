@@ -1,11 +1,11 @@
-use crate::rich_utils::{ObjectKind, RichIter, RichRecord, RichStructure};
+use crate::utils::rich_utils::{ObjectKind, RichIter, RichRecord, RichStructure};
 use bytemuck::cast_slice;
+use colored::Colorize;
 use exe::VecPE;
 use phf::phf_map;
 use term_table::row::Row;
 use term_table::table_cell::TableCell;
 use term_table::Table;
-use colored::Colorize;
 
 /// From https://github.com/RichHeaderResearch/RichPE/blob/master/spoof_check.py
 /// (Thanks !)
@@ -282,25 +282,24 @@ pub fn display_rich(pe: &VecPE) {
     let result: &[u32] = cast_slice(ptr_buf);
     let rich_header = RichStructure::try_from(result).unwrap();
     let mut table = Table::new();
-    table.max_column_width = term_size::dimensions().or_else(|| Some((4000, 4000))).unwrap().0;
-    
+    table.max_column_width = term_size::dimensions()
+        .or_else(|| Some((4000, 4000)))
+        .unwrap()
+        .0;
+
     table.add_row(Row::new(vec![
-        TableCell::new_with_alignment("Product Name".bold(), 1, term_table::table_cell::Alignment::Left),
         TableCell::new_with_alignment(
-            "Build".bold(),
+            "Product Name".bold(),
             1,
             term_table::table_cell::Alignment::Left,
         ),
+        TableCell::new_with_alignment("Build".bold(), 1, term_table::table_cell::Alignment::Left),
         TableCell::new_with_alignment(
             "Product ID".bold(),
             1,
             term_table::table_cell::Alignment::Left,
         ),
-        TableCell::new_with_alignment(
-            "Count".bold(),
-            1,
-            term_table::table_cell::Alignment::Left,
-        ),
+        TableCell::new_with_alignment("Count".bold(), 1, term_table::table_cell::Alignment::Left),
         TableCell::new_with_alignment(
             "Guessed Visual Studio version".bold(),
             1,
@@ -308,21 +307,36 @@ pub fn display_rich(pe: &VecPE) {
         ),
     ]));
 
-
     for record in rich_header.records() {
         let product_name = KNOWN_PRODUCT_IDS
             .contains_key(&record.product)
             .then(|| KNOWN_PRODUCT_IDS[&record.product])
-            .or_else(|| Some("")).unwrap();
+            .or_else(|| Some(""))
+            .unwrap();
         table.add_row(Row::new(vec![
             TableCell::new_with_alignment(product_name, 1, term_table::table_cell::Alignment::Left),
-            TableCell::new_with_alignment(&record.build, 1, term_table::table_cell::Alignment::Left),
-            TableCell::new_with_alignment(&record.product, 1, term_table::table_cell::Alignment::Left),
-            TableCell::new_with_alignment(&record.count, 1, term_table::table_cell::Alignment::Left),
-            TableCell::new_with_alignment(lookup_vs_version(record.product), 1, term_table::table_cell::Alignment::Left),
+            TableCell::new_with_alignment(
+                &record.build,
+                1,
+                term_table::table_cell::Alignment::Left,
+            ),
+            TableCell::new_with_alignment(
+                &record.product,
+                1,
+                term_table::table_cell::Alignment::Left,
+            ),
+            TableCell::new_with_alignment(
+                &record.count,
+                1,
+                term_table::table_cell::Alignment::Left,
+            ),
+            TableCell::new_with_alignment(
+                lookup_vs_version(record.product),
+                1,
+                term_table::table_cell::Alignment::Left,
+            ),
         ]));
     }
     table.style = term_table::TableStyle::thin();
-    println!("{}", table.render() );
-    println!("{} records", rich_header.records().len());
+    println!("{}", table.render());
 }

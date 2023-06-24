@@ -9,7 +9,7 @@
 
 use std::{fmt, iter, mem, result};
 
-use crate::rich_utils_err::{Error, Result};
+use crate::utils::rich_utils_err::{Error, Result};
 
 //----------------------------------------------------------------
 

@@ -31,7 +31,10 @@ pub fn display_version_info(pe: &VecPE) {
 
         let string_map = string_file_info.children[0].string_map().unwrap();
         let mut table = Table::new();
-        table.max_column_width = term_size::dimensions().or_else(|| Some((4000, 4000))).unwrap().0;
+        table.max_column_width = term_size::dimensions()
+            .or_else(|| Some((4000, 4000)))
+            .unwrap()
+            .0;
         for (key, value) in infos.into_iter() {
             table.add_row(Row::new(vec![
                 TableCell::new_with_alignment(key, 1, term_table::table_cell::Alignment::Left),
