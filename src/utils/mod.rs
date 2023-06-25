@@ -5,3 +5,4 @@ pub mod rich_utils_err;
 pub mod sections;
 pub mod debug;
 pub mod rsrc;
+pub mod tls;

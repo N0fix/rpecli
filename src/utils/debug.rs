@@ -84,7 +84,13 @@ impl<'a> fmt::Display for CodeView<'a> {
 pub fn display_debug_info(pe: &VecPE) {
     const VC20: &[u8; 4] = b"NB10";
     const VC70: &[u8; 4] = b"RSDS";
-    let debug_directory_check = DebugDirectory::parse(pe).unwrap();
+    let debug_directory_check = match DebugDirectory::parse(pe) {
+        Ok(d) => d,
+        Err(_) => {
+            println!("No debug directory");
+            return;
+        },
+    };
 
     let debug_directory = debug_directory_check;
     match ImageDebugType::from_u32(debug_directory.type_) {
@@ -105,7 +111,11 @@ pub fn display_debug_info(pe: &VecPE) {
                     let pdb_file_name = CStr::from_bytes_with_nul(&x[20..]).unwrap();
                     CodeView::Cv70 { image: info, pdb_file_name: pdb_file_name }
                 },
-                _ => panic!("Unknown debug VC mode"),
+                _ => {
+                    // TODO print hex
+                    println!("Unknown debug VC mode : {:?} {:?}\n TODO : PRINT HEX", vc_type, x);
+                    return;
+                },
             };
             println!("{:#}", cv);
         },

@@ -8,6 +8,7 @@ use crate::utils::rsrc::display_rsrc;
 use crate::utils::sections::{display_sections, get_section_EP};
 
 use crate::utils::hash::display_hashes;
+use crate::utils::tls::display_tls;
 use chrono::{TimeZone, Utc, NaiveDateTime, DateTime};
 use human_bytes::human_bytes;
 
@@ -22,7 +23,7 @@ fn get_type(pe: &VecPE) -> &str {
     }
 }
 
-// TODO show debug, TLS & ressources
+// TODO show TLS
 pub fn display_info(pe_filepath: &str) {
     let image = VecPE::from_disk_file(pe_filepath).unwrap();
     println!("Metadata:\n{}", "=".repeat(if true { 80 } else { 0 }));
@@ -83,4 +84,8 @@ pub fn display_info(pe_filepath: &str) {
     println!("");
     println!("Resources:\n{}", "=".repeat(if true { 80 } else { 0 }));
     display_rsrc(&image);
+
+    println!("");
+    println!("TLS callbacks:\n{}", "=".repeat(if true { 80 } else { 0 }));
+    display_tls(&image);
 }

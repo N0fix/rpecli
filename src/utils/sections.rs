@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use colored::Colorize;
 use entropy::shannon_entropy;
 use exe::PEType;
@@ -144,7 +146,25 @@ pub fn display_sections(pe: &VecPE) {
     }
 }
 
-pub fn get_section_EP(pe: &VecPE) -> &str {
+pub fn get_section_name_from_offset<P: PE>(offset: u64, pe: &P) -> Result<String, exe::Error> {
+    let sections = match pe.get_section_table() {
+        Ok(sections) => sections,
+        Err(_) => panic!("Could not parse section table ! Is your file a PE file?"),
+    };
+
+    for section in sections {
+        if offset >= (section.virtual_address.0 as u64)
+            && ((offset)
+                < (section.virtual_size as u64 + section.virtual_address.0 as u64))
+        {
+            return Ok(section.name.as_str().unwrap().to_owned());
+        }
+    }
+
+    Err(exe::Error::SectionNotFound)
+}
+
+pub fn get_section_EP<P: PE>(pe: &P) -> &str {
     let entrypoint = pe.get_entrypoint().unwrap().0 as u64;
     let sections = match pe.get_section_table() {
         Ok(sections) => sections,
