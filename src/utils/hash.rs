@@ -1,15 +1,9 @@
-use exe::{Buffer, VecPE, PE};
+use exe::{Buffer, VecPE, PE, HashData};
 
 pub fn display_hashes(pe: &VecPE) {
-    let sha256_digest = sha256::digest(pe.get_buffer().as_ref());
-    let md5_digest = md5::compute(pe.get_buffer().as_ref());
-    println!(
-        "{:10}: {}\n{:10}: {}\n{:10}: {}",
-        "MD5",
-        format!("{:x}", md5_digest),
-        "SHA256",
-        sha256_digest,
-        "Imphash",
-        hex::encode(&pe.calculate_imphash().unwrap())
-    );
+    // let sha256_digest = sha256::digest(pe.get_buffer().as_ref());
+    // let md5_digest = md5::compute(pe.get_buffer().as_ref());
+    println!("{:10}: {}", "MD5", hex::encode(&pe.md5()));
+    println!("{:10}: {}", "SHA1", hex::encode(&pe.sha1()));
+    println!("{:10}: {}", "SHA256", hex::encode(&pe.sha256()));
 }

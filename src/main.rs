@@ -2,7 +2,6 @@ use exe::pe::{VecPE, PE};
 use exe::types::CCharString;
 use exe::{Buffer, SectionCharacteristics};
 extern crate argparse;
-
 use argparse::{ArgumentParser, Store};
 mod commands;
 mod import_export;

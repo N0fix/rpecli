@@ -3,10 +3,13 @@ use exe::{FileCharacteristics, VecPE, PE};
 use crate::import_export::{display_imports, display_exports};
 use crate::rich::display_rich;
 use crate::sig::display_sig;
+use crate::utils::debug::display_debug_info;
+use crate::utils::rsrc::display_rsrc;
 use crate::utils::sections::{display_sections, get_section_EP};
 
 use crate::utils::hash::display_hashes;
-use chrono::{TimeZone, Utc};
+use chrono::{TimeZone, Utc, NaiveDateTime, DateTime};
+use human_bytes::human_bytes;
 
 fn get_type(pe: &VecPE) -> &str {
     let file_characteristics = match pe.get_arch().unwrap() {
@@ -26,8 +29,8 @@ pub fn display_info(pe_filepath: &str) {
     display_hashes(&image);
 
     println!("");
-
-    println!("Size:\t\t{:#x} bytes", image.get_buffer().as_ref().len());
+    let pe_sz = image.get_buffer().as_ref().len();
+    println!("Size:\t\t{} ({} bytes)", human_bytes(pe_sz as u32), pe_sz);
     println!(
         "Type:\t\t{:?} {}",
         image.get_arch().unwrap(),
@@ -43,7 +46,9 @@ pub fn display_info(pe_filepath: &str) {
         },
     };
 
-    println!("Compile Time:\t{} (Timestamp: {})", Utc.timestamp_millis_opt(timestamp as i64).unwrap(), timestamp);
+    let naive = NaiveDateTime::from_timestamp_opt(timestamp.into(), 0).unwrap();
+    let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+    println!("Compile Time:\t{} (Timestamp: {})", datetime.format("%Y-%m-%d %H:%M:%S"), timestamp as i64);
 
     println!(
         "Entrypoint:     {:#x} => {}\n",
@@ -70,4 +75,12 @@ pub fn display_info(pe_filepath: &str) {
     println!("Exports:\n{}", "=".repeat(if true { 80 } else { 0 }));
     display_exports(&image);
     // println!("Type:\t\t{:#x} bytes", image.get_type());
+    println!("");
+    println!("Debug info:\n{}", "=".repeat(if true { 80 } else { 0 }));
+
+    display_debug_info(&image);
+
+    println!("");
+    println!("Resources:\n{}", "=".repeat(if true { 80 } else { 0 }));
+    display_rsrc(&image);
 }

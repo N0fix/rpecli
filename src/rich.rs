@@ -337,6 +337,8 @@ pub fn display_rich(pe: &VecPE) {
             ),
         ]));
     }
-    table.style = term_table::TableStyle::thin();
+    table.style = term_table::TableStyle::empty();
+    table.separate_rows = false;
+    // table.style = term_table::TableStyle::thin();
     println!("{}", table.render());
 }
