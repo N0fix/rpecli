@@ -1,15 +1,15 @@
 use exe::{FileCharacteristics, VecPE, PE};
 
-use crate::import_export::{display_imports, display_exports};
+use crate::import_export::{display_exports, display_imports};
 use crate::rich::display_rich;
 use crate::sig::display_sig;
 use crate::utils::debug::display_debug_info;
 use crate::utils::rsrc::display_rsrc;
-use crate::utils::sections::{display_sections, get_section_EP};
+use crate::utils::sections::{display_sections, get_section_name_from_offset};
 
 use crate::utils::hash::display_hashes;
 use crate::utils::tls::display_tls;
-use chrono::{TimeZone, Utc, NaiveDateTime, DateTime};
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use human_bytes::human_bytes;
 
 fn get_type(pe: &VecPE) -> &str {
@@ -40,21 +40,37 @@ pub fn display_info(pe_filepath: &str) {
 
     let timestamp = match image.get_arch().unwrap() {
         exe::Arch::X86 => {
-            image.get_nt_headers_32().unwrap().file_header.time_date_stamp
-        },
+            image
+                .get_nt_headers_32()
+                .unwrap()
+                .file_header
+                .time_date_stamp
+        }
         exe::Arch::X64 => {
-            image.get_nt_headers_64().unwrap().file_header.time_date_stamp
-        },
+            image
+                .get_nt_headers_64()
+                .unwrap()
+                .file_header
+                .time_date_stamp
+        }
     };
 
     let naive = NaiveDateTime::from_timestamp_opt(timestamp.into(), 0).unwrap();
     let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-    println!("Compile Time:\t{} (Timestamp: {})", datetime.format("%Y-%m-%d %H:%M:%S"), timestamp as i64);
-
+    println!(
+        "Compile Time:\t{} (Timestamp: {})",
+        datetime.format("%Y-%m-%d %H:%M:%S"),
+        timestamp as i64
+    );
+    let ep_section =
+        match get_section_name_from_offset(image.get_entrypoint().unwrap().0 as u64, &image) {
+            Ok(s) => s,
+            Err(_) => String::from("Not in a section"),
+        };
     println!(
         "Entrypoint:     {:#x} => {}\n",
         image.get_entrypoint().unwrap().0,
-        get_section_EP(&image)
+        ep_section
     );
     println!("");
     println!("Signature:\n{}", "=".repeat(if true { 80 } else { 0 }));

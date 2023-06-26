@@ -279,8 +279,14 @@ fn lookup_vs_version(product_id: u16) -> &'static str {
 
 pub fn display_rich(pe: &VecPE) {
     let ptr_buf = pe.get_buffer().as_ref();
-    let result: &[u32] = cast_slice(ptr_buf);
-    let rich_header = RichStructure::try_from(result).unwrap();
+    let result: &[u32] = cast_slice(&ptr_buf[0..0x100]);
+    let rich_header = match RichStructure::try_from(result) {
+        Ok(rich) => rich,
+        Err(_) => {
+            println!("No rich headers");
+            return;
+        }
+    };
     let mut table = Table::new();
     table.max_column_width = term_size::dimensions()
         .or_else(|| Some((4000, 4000)))

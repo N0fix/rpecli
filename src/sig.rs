@@ -48,9 +48,13 @@ pub fn display_version_info(pe: &VecPE) {
 }
 
 pub fn display_sig(pe: &VecPE) {
-    let security_dir = pe
-        .get_data_directory(exe::ImageDirectoryEntry::Security)
-        .unwrap();
+    let security_dir = match pe.get_data_directory(exe::ImageDirectoryEntry::Security) {
+        Ok(security_dir) => security_dir,
+        Err(_) => {
+            println!("No security directory");
+            return;
+        }
+    };
     if security_dir.virtual_address.0 == 0 {
         println!("Not signed");
     } else {

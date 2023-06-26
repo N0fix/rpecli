@@ -1,4 +1,4 @@
-use exe::{Buffer, VecPE, PE, HashData};
+use exe::{Buffer, HashData, VecPE, PE};
 
 pub fn display_hashes(pe: &VecPE) {
     // let sha256_digest = sha256::digest(pe.get_buffer().as_ref());

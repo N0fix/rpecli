@@ -1,10 +1,11 @@
-use exe::{ResourceDirectory, VecPE, ResourceDirectoryID, ImageResourceDirStringU, ResourceID, ImageResourceDirectoryEntry, WCharString, ResolvedDirectoryData, ResourceDirectoryData, ImageResourceDataEntry};
-use exe::pe::{PE};
+use exe::pe::PE;
 use exe::types::{CCharString, ImportData, ImportDirectory};
-use exe::ResolvedDirectoryData::{Directory, Data};
+use exe::ResolvedDirectoryData::{Data, Directory};
+use exe::{Buffer, ImageDirectoryEntry, ResolvedDirectoryID, ResourceDirectoryMut};
 use exe::{
-    Buffer, ImageDirectoryEntry,
-    ResolvedDirectoryID,  ResourceDirectoryMut,
+    ImageResourceDataEntry, ImageResourceDirStringU, ImageResourceDirectoryEntry,
+    ResolvedDirectoryData, ResourceDirectory, ResourceDirectoryData, ResourceDirectoryID,
+    ResourceID, VecPE, WCharString,
 };
 
 pub fn ResolvedDirectoryID_to_string(id: ResolvedDirectoryID) -> String {
@@ -50,13 +51,16 @@ pub fn display_rsrc(pe: &VecPE) {
         Err(_) => {
             println!("No resource");
             return;
-        },
+        }
     };
     // println!("{} resource(s)\n", rsrc.root_node.directory.entries());
     for entry in rsrc.resources {
         let data_entry = entry.get_data_entry(pe).unwrap();
         let resource_directory_name = ResolvedDirectoryID_to_string(entry.type_id);
-        println!("{} (offset: {:x}) rsrc {:?}: lang {:?}", resource_directory_name, entry.data.0, entry.rsrc_id, entry.lang_id);
+        println!(
+            "{} (offset: {:x}) rsrc {:?}: lang {:?}",
+            resource_directory_name, entry.data.0, entry.rsrc_id, entry.lang_id
+        );
 
         // TODO : display with verbose on certain types.
         // TODO : mode to dump rsrc directly to a file.

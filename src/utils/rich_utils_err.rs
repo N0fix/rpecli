@@ -123,5 +123,5 @@ impl error::Error for Error {
     }
 }
 
-/// Specialized `Result` type for PE errors.
-pub type Result<T> = result::Result<T, Error>;
+// Specialized `Result` type for PE errors.
+// pub type Result<T> = result::Result<T, Error>;

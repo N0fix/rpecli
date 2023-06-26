@@ -1,5 +1,5 @@
-use exe::{VecPE, PE, ImageTLSDirectory32, ImageTLSDirectory64};
 use crate::utils::sections::get_section_name_from_offset;
+use exe::{ImageTLSDirectory32, ImageTLSDirectory64, VecPE, PE};
 
 pub fn display_tls<P: PE>(pe: &P) {
     match pe.get_arch().unwrap() {
@@ -19,10 +19,10 @@ pub fn display_tls<P: PE>(pe: &P) {
                     Ok(s) => println!("{:x} => {}", callback.0, s),
                     Err(_) => {
                         println!("{:x} => Not in a section", callback.0)
-                    },
+                    }
                 }
             }
-        },
+        }
         exe::Arch::X64 => {
             let tls = ImageTLSDirectory64::parse(pe);
             if tls.is_err() {
@@ -39,9 +39,9 @@ pub fn display_tls<P: PE>(pe: &P) {
                     Ok(s) => println!("{:x} => {}", callback.0, s),
                     Err(_) => {
                         println!("{:x} => Not in a section", callback.0)
-                    },
+                    }
                 }
             }
-        },
+        }
     };
 }

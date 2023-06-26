@@ -2,11 +2,16 @@ use std::error::Error;
 
 use colored::Colorize;
 use entropy::shannon_entropy;
-use exe::PEType;
+use exe::{Buffer, PEType};
 use exe::{CCharString, SectionCharacteristics, VecPE, PE};
 use term_table::row::Row;
 use term_table::table_cell::TableCell;
 use term_table::Table;
+#[macro_use]
+use crate::{color_format, alert_format, warn_format};
+use crate::util::{round_to_pe_sz, round_to_pe_sz_with_offset, safe_read};
+
+
 
 pub fn display_sections(pe: &VecPE) {
     let mut table = Table::new();
@@ -47,6 +52,7 @@ pub fn display_sections(pe: &VecPE) {
             term_table::table_cell::Alignment::Center,
         ),
     ]));
+
     match pe.get_section_table() {
         Ok(sections) => {
             // println!(
@@ -69,7 +75,10 @@ pub fn display_sections(pe: &VecPE) {
                             | SectionCharacteristics::MEM_READ
                             | SectionCharacteristics::MEM_WRITE)
                 );
-                let section_hash = format!("{:?}", md5::compute(section.read(pe).unwrap()));
+                let data_offset = section.data_offset(pe.get_type());
+                let data_size = section.data_size(pe.get_type());
+                let section_data = safe_read(pe, data_offset, data_size); // pe.read(offset.into(), size).unwrap();
+                let section_hash = format!("{:?}", md5::compute(section_data));
                 table.add_row(Row::new(vec![
                     TableCell::new_with_alignment(
                         section.name.as_str().unwrap(),
@@ -92,12 +101,18 @@ pub fn display_sections(pe: &VecPE) {
                         term_table::table_cell::Alignment::Right,
                     ),
                     TableCell::new_with_alignment(
-                        format!("{:#x}", section.size_of_raw_data),
+                        format!(
+                            "{}",
+                            alert_format!(
+                                format!("{:#x}", section.size_of_raw_data),
+                                section.size_of_raw_data != section_data.len() as u32
+                            )
+                        ),
                         1,
                         term_table::table_cell::Alignment::Right,
                     ),
                     TableCell::new_with_alignment(
-                        format!("{:6.2}", shannon_entropy(section.read(pe).unwrap())),
+                        format!("{:6.2}", shannon_entropy(section_data)),
                         1,
                         term_table::table_cell::Alignment::Right,
                     ),
@@ -154,31 +169,11 @@ pub fn get_section_name_from_offset<P: PE>(offset: u64, pe: &P) -> Result<String
 
     for section in sections {
         if offset >= (section.virtual_address.0 as u64)
-            && ((offset)
-                < (section.virtual_size as u64 + section.virtual_address.0 as u64))
+            && ((offset) < (section.virtual_size as u64 + section.virtual_address.0 as u64))
         {
             return Ok(section.name.as_str().unwrap().to_owned());
         }
     }
 
     Err(exe::Error::SectionNotFound)
-}
-
-pub fn get_section_EP<P: PE>(pe: &P) -> &str {
-    let entrypoint = pe.get_entrypoint().unwrap().0 as u64;
-    let sections = match pe.get_section_table() {
-        Ok(sections) => sections,
-        Err(_) => panic!("Could not parse section table ! Is your file a PE file?"),
-    };
-
-    for section in sections {
-        if entrypoint >= (section.virtual_address.0 as u64)
-            && ((entrypoint as u64)
-                < (section.virtual_size as u64 + section.virtual_address.0 as u64))
-        {
-            return section.name.as_str().unwrap();
-        }
-    }
-
-    "Not in a section" // Should return an error we can match and print w/ red color
 }

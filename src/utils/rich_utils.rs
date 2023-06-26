@@ -9,7 +9,9 @@
 
 use std::{fmt, iter, mem, result};
 
-use crate::utils::rich_utils_err::{Error, Result};
+use crate::utils::rich_utils_err::Error;
+
+use super::rich_utils_err;
 
 //----------------------------------------------------------------
 
@@ -29,7 +31,7 @@ pub struct RichStructure<'a> {
     image: &'a [u32],
 }
 impl<'a> RichStructure<'a> {
-    pub(crate) fn try_from(image: &'a [u32]) -> Result<RichStructure<'a>> {
+    pub(crate) fn try_from(image: &'a [u32]) -> Result<RichStructure<'a>, rich_utils_err::Error> {
         // Read as a slice of dwords up until the PE headers
         let image = image
             .get(15)

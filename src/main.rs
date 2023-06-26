@@ -7,7 +7,9 @@ mod commands;
 mod import_export;
 mod rich;
 mod sig;
+mod util;
 mod utils;
+mod format;
 use crate::commands::info::display_info;
 use crate::import_export::{display_exports, display_imports};
 use crate::rich::display_rich;
@@ -113,7 +115,7 @@ fn main() {
     println!("");
 
     println!("PE Info:\n==============================================");
-    let pe_size: u32 = get_pe_size(&image);
+    let pe_size = get_pe_size(&image);
     println!(
         "File size {:#x}, pe size {:#x}\n",
         image.as_slice().len(),
