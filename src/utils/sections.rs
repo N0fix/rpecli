@@ -8,7 +8,7 @@ use term_table::row::Row;
 use term_table::table_cell::TableCell;
 use term_table::Table;
 #[macro_use]
-use crate::{color_format, alert_format, warn_format};
+use crate::{color_format_if, alert_format, warn_format, alert_format_if, warn_format_if};
 use crate::util::{round_to_pe_sz, round_to_pe_sz_with_offset, safe_read};
 
 
@@ -103,7 +103,7 @@ pub fn display_sections(pe: &VecPE) {
                     TableCell::new_with_alignment(
                         format!(
                             "{}",
-                            alert_format!(
+                            alert_format_if!(
                                 format!("{:#x}", section.size_of_raw_data),
                                 section.size_of_raw_data != section_data.len() as u32
                             )

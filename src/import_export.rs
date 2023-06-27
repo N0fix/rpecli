@@ -1,3 +1,5 @@
+use std::ffi::CStr;
+
 use colored::Colorize;
 use exe::headers::ImageImportDescriptor;
 use exe::{
@@ -60,6 +62,14 @@ pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
     if let Ok(name) = export_table.get_name(pe) {
         println!("\n{}", name.as_str().unwrap().bold())
     }
+    // WIP parsing manually to retrieve proper export ordinals
+    // let names = export_table.get_names(pe).unwrap();
+    // let ords = export_table.get_name_ordinals(pe).unwrap();
+
+    // for (i, name) in names.iter().enumerate() {
+    //     println!("export {:x} {}", ords[i], pe.get_cstring(name.0 as usize, false, None).unwrap().as_str().unwrap());
+    // }
+    // return Ok(());
     let exports = match export_table.get_export_map(pe) {
         Ok(export_map) => export_map,
         Err(e) => {

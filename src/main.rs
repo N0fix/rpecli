@@ -1,3 +1,4 @@
+use colored::Colorize;
 use exe::pe::{VecPE, PE};
 use exe::types::CCharString;
 use exe::{Buffer, SectionCharacteristics};
@@ -108,7 +109,10 @@ fn main() {
             .required();
         ap.parse_args_or_exit();
     }
-    let image = VecPE::from_disk_file(pe_filepath).unwrap();
+    let Ok(image) = VecPE::from_disk_file(pe_filepath) else {
+        println!("{}", alert_format!(format!("Could not read {}", pe_filepath)));
+        return;
+    };
     // dbg!(pe_filepath);
     println!("Sections:\n==============================================");
     display_sections(&image);

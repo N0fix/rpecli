@@ -1,5 +1,7 @@
+use colored::Colorize;
 use exe::{FileCharacteristics, VecPE, PE};
 
+use crate::{color_format_if, alert_format, warn_format, alert_format_if, warn_format_if};
 use crate::import_export::{display_exports, display_imports};
 use crate::rich::display_rich;
 use crate::sig::display_sig;
@@ -23,9 +25,12 @@ fn get_type(pe: &VecPE) -> &str {
     }
 }
 
-// TODO show TLS
+
 pub fn display_info(pe_filepath: &str) {
-    let image = VecPE::from_disk_file(pe_filepath).unwrap();
+    let Ok(image) = VecPE::from_disk_file(pe_filepath) else {
+        println!("{}", alert_format!(format!("Could not read {}", pe_filepath)));
+        return;
+    };
     println!("Metadata:\n{}", "=".repeat(if true { 80 } else { 0 }));
     display_hashes(&image);
 
@@ -38,7 +43,12 @@ pub fn display_info(pe_filepath: &str) {
         get_type(&image)
     );
 
-    let timestamp = match image.get_arch().unwrap() {
+    let Ok(arch) = image.get_arch() else {
+        println!("{}", alert_format!("Could not read PE arch"));
+        return;
+    };
+
+    let timestamp = match arch {
         exe::Arch::X86 => {
             image
                 .get_nt_headers_32()
@@ -62,14 +72,18 @@ pub fn display_info(pe_filepath: &str) {
         datetime.format("%Y-%m-%d %H:%M:%S"),
         timestamp as i64
     );
+    let Ok(entrypoint) = image.get_entrypoint() else {
+        println!("{}", "Invalid NT headers".red().bold());
+        return;
+    };
     let ep_section =
-        match get_section_name_from_offset(image.get_entrypoint().unwrap().0 as u64, &image) {
+        match get_section_name_from_offset(entrypoint.0 as u64, &image) {
             Ok(s) => s,
             Err(_) => String::from("Not in a section"),
         };
     println!(
         "Entrypoint:     {:#x} => {}\n",
-        image.get_entrypoint().unwrap().0,
+        entrypoint.0,
         ep_section
     );
     println!("");
