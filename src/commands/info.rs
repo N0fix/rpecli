@@ -1,6 +1,7 @@
 use colored::Colorize;
 use exe::{FileCharacteristics, VecPE, PE};
 
+use crate::util::get_subsystem;
 use crate::{color_format_if, alert_format, warn_format, alert_format_if, warn_format_if};
 use crate::import_export::{display_exports, display_imports};
 use crate::rich::display_rich;
@@ -32,7 +33,7 @@ pub fn display_info(pe_filepath: &str) {
         return;
     };
     println!("Metadata:\n{}", "=".repeat(if true { 80 } else { 0 }));
-    display_hashes(&image);
+    // display_hashes(&image);
 
     println!("");
     let pe_sz = image.get_buffer().as_ref().len();
@@ -81,6 +82,7 @@ pub fn display_info(pe_filepath: &str) {
             Ok(s) => s,
             Err(_) => String::from("Not in a section"),
         };
+    println!("Subsystem:      {}", get_subsystem(&image).unwrap().as_string() );
     println!(
         "Entrypoint:     {:#x} => {}\n",
         entrypoint.0,

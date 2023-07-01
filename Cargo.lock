@@ -473,6 +473,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
+name = "ngrammatic"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c6f2f987e82da7fb8a290e959bba528638bc0e2629e38647591e845ecb5f6fe"
+
+[[package]]
 name = "num-traits"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -622,6 +628,7 @@ dependencies = [
  "human_bytes",
  "infer",
  "md5",
+ "ngrammatic",
  "phf",
  "term-table",
  "term_size",

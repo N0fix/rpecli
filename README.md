@@ -21,3 +21,7 @@ rpecli info path_to_exe
 - Color on sections
 - Feature to handle comparing some fields between multiple binaries to help finding header similarities
 - Refacto of some parts
+
+### Optimisation notes
+
+Callgrind indicates that most of the time is spent hashing stuff (sha/md5) and rendering tables.

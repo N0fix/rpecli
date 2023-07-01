@@ -12,6 +12,8 @@ mod util;
 mod utils;
 mod format;
 use crate::commands::info::display_info;
+// use crate::commands::import_export::display_import_export;
+// use crate::commands::resource::display_ressource;
 use crate::import_export::{display_exports, display_imports};
 use crate::rich::display_rich;
 use crate::sig::{display_sig, display_version_info};
@@ -29,32 +31,35 @@ struct PEArgs {
 #[derive(Debug)]
 enum CliSub {
     Info(PEArgs),
-    Remove(PEArgs),
+    ImportExport(PEArgs),
+    Rsrc(PEArgs),
 }
 
 impl FromArgMatches for CliSub {
     fn from_arg_matches(matches: &ArgMatches) -> Result<Self, Error> {
         match matches.subcommand() {
             Some(("info", args)) => Ok(Self::Info(PEArgs::from_arg_matches(args)?)),
-            Some(("remove", args)) => Ok(Self::Remove(PEArgs::from_arg_matches(args)?)),
+            Some(("import_export", args)) => Ok(Self::ImportExport(PEArgs::from_arg_matches(args)?)),
+            Some(("rsrc", args)) => Ok(Self::Rsrc(PEArgs::from_arg_matches(args)?)),
             Some((_, _)) => Err(Error::raw(
                 ErrorKind::InvalidSubcommand,
-                "Valid subcommands are `info` and `remove`",
+                "Valid subcommands are `info` `import_export` `rsrc` ",
             )),
             None => Err(Error::raw(
                 ErrorKind::MissingSubcommand,
-                "Valid subcommands are `info` and `remove`",
+                "Valid subcommands are `info` `import_export` `rsrc` ",
             )),
         }
     }
     fn update_from_arg_matches(&mut self, matches: &ArgMatches) -> Result<(), Error> {
         match matches.subcommand() {
             Some(("info", args)) => *self = Self::Info(PEArgs::from_arg_matches(args)?),
-            Some(("remove", args)) => *self = Self::Remove(PEArgs::from_arg_matches(args)?),
+            Some(("import_export", args)) => *self = Self::ImportExport(PEArgs::from_arg_matches(args)?),
+            Some(("rsrc", args)) => *self = Self::Rsrc(PEArgs::from_arg_matches(args)?),
             Some((_, _)) => {
                 return Err(Error::raw(
                     ErrorKind::InvalidSubcommand,
-                    "Valid subcommands are `info` and `remove`",
+                    "Valid subcommands are `info` `import_export` `rsrc` ",
                 ))
             }
             None => (),
@@ -66,16 +71,18 @@ impl FromArgMatches for CliSub {
 impl Subcommand for CliSub {
     fn augment_subcommands(cmd: Command) -> Command {
         cmd.subcommand(PEArgs::augment_args(Command::new("info")))
-            .subcommand(PEArgs::augment_args(Command::new("remove")))
+            .subcommand(PEArgs::augment_args(Command::new("import_export")))
+            .subcommand(PEArgs::augment_args(Command::new("rsrc")))
             .subcommand_required(true)
-    }
-    fn augment_subcommands_for_update(cmd: Command) -> Command {
-        cmd.subcommand(PEArgs::augment_args(Command::new("info")))
-            .subcommand(PEArgs::augment_args(Command::new("remove")))
+        }
+        fn augment_subcommands_for_update(cmd: Command) -> Command {
+            cmd.subcommand(PEArgs::augment_args(Command::new("info")))
+            .subcommand(PEArgs::augment_args(Command::new("import_export")))
+            .subcommand(PEArgs::augment_args(Command::new("rsrc")))
             .subcommand_required(true)
     }
     fn has_subcommand(name: &str) -> bool {
-        matches!(name, "info" | "remove")
+        matches!(name, "info" | "import_export | rsrc")
     }
 }
 
@@ -94,7 +101,12 @@ fn main() {
         CliSub::Info(args) => {
             display_info(&args.pe);
         }
-        CliSub::Remove(_) => todo!(),
+        CliSub::ImportExport(args) => {
+            // display_import_export(&args.pe);
+        },
+        CliSub::Rsrc(args) => {
+            // display_ressource(&args.pe);
+        },
     };
 
     return;

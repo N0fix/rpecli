@@ -11,7 +11,7 @@ macro_rules! color_format_if {
 #[macro_export]
 macro_rules! warn_format_if {
     ($fmt:expr, $val:expr) => {
-        color_format!($fmt, $val, colored::Colorize::yellow)
+        color_format_if!($fmt, $val, colored::Colorize::yellow)
     };
 }
 

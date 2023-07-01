@@ -101,15 +101,13 @@ impl<'a> fmt::Display for CodeView<'a> {
     }
 }
 
+
 pub fn display_debug_info(pe: &VecPE) {
     const VC20: &[u8; 4] = b"NB10";
     const VC70: &[u8; 4] = b"RSDS";
-    let debug_directory_check = match DebugDirectory::parse(pe) {
-        Ok(d) => d,
-        Err(_) => {
-            println!("No debug directory");
-            return;
-        }
+    let Ok(debug_directory_check) = DebugDirectory::parse(pe) else {
+        println!("No debug directory");
+        return;
     };
 
     let debug_directory = debug_directory_check;
@@ -153,6 +151,9 @@ pub fn display_debug_info(pe: &VecPE) {
             };
             println!("{:#}", cv);
         }
-        _ => {}
+        _ => {
+            println!("Unknown debug directory type number {}", debug_directory.type_);
+        }
     };
 }
+
