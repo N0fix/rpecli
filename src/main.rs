@@ -11,9 +11,9 @@ mod sig;
 mod util;
 mod utils;
 mod format;
+use crate::commands::import_export::display_import_export;
 use crate::commands::info::display_info;
-// use crate::commands::import_export::display_import_export;
-// use crate::commands::resource::display_ressource;
+use crate::commands::resource::display_ressource;
 use crate::import_export::{display_exports, display_imports};
 use crate::rich::display_rich;
 use crate::sig::{display_sig, display_version_info};
@@ -102,10 +102,10 @@ fn main() {
             display_info(&args.pe);
         }
         CliSub::ImportExport(args) => {
-            // display_import_export(&args.pe);
+            display_import_export(&args.pe);
         },
         CliSub::Rsrc(args) => {
-            // display_ressource(&args.pe);
+            display_ressource(&args.pe);
         },
     };
 

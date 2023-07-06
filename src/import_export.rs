@@ -6,7 +6,7 @@ use colored::Colorize;
 use exe::headers::ImageImportDescriptor;
 use exe::{
     CCharString, ExportDirectory, ImageDirectoryEntry, ImageImportByName, ImportData,
-    ImportDirectory, SectionCharacteristics, Thunk32, ThunkData, ThunkFunctions, VecPE, PE, RVA, PETranslation, ImageExportDirectory,
+    ImportDirectory, SectionCharacteristics, Thunk32, ThunkData, ThunkFunctions, VecPE, PE, RVA, PETranslation, ImageExportDirectory, HashData,
 };
 use ngrammatic::NgramBuilder;
 
@@ -133,5 +133,21 @@ pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
         println!("\n{}", "Weird looking exports".yellow());
     }
 
+    println!("\nexphash: {}", hex::encode(calculate_exphash(pe).unwrap()));
+
     Ok(())
+}
+
+/// Calculate the exphash of the PE file.
+fn calculate_exphash<P: PE>(pe: &P) -> Result<Vec<u8>, exe::Error> {
+    let export_directory = ExportDirectory::parse(pe)?;
+    let mut exphash_results = Vec::<String>::new();
+
+    for &name_rva in export_directory.get_names(pe)? {
+        let name_offset = pe.translate(PETranslation::Memory(name_rva))?;
+        let name = pe.get_cstring(name_offset, false, None)?;
+        exphash_results.push(name.as_str()?.to_string().clone());
+    }
+
+    Ok(exphash_results.join(",").as_str().to_lowercase().as_bytes().sha256())
 }

@@ -104,10 +104,10 @@ pub fn display_rsrc(pe: &VecPE) {
             TableCell::new_with_alignment(format!("{:?}", entry.lang_id), 1, term_table::table_cell::Alignment::Center),
             TableCell::new_with_alignment(format!("{:?}", md5::compute(res_data)), 1, term_table::table_cell::Alignment::Center),
         ]));
-        println!(
-            "{} (offset: {:x}) rsrc {:?}: lang {:?} {:?}",
-            resource_directory_name, entry.data.0, entry.rsrc_id, entry.lang_id, md5::compute(res_data)
-        );
+        // println!(
+        //     "{} (offset: {:x}) rsrc {:?}: lang {:?} {:?}",
+        //     resource_directory_name, entry.data.0, entry.rsrc_id, entry.lang_id, md5::compute(res_data)
+        // );
 
 
         // TODO : display with verbose on certain types.
