@@ -2,9 +2,11 @@
 name = "rpecli"
 version = "0.1.0"
 edition = "2021"
-license = "Apache-2.0"
+license-file = "LICENSE"
 repository = "https://github.com/N0fix/rpecli"
-rust-version = "1.70"
+authors = ["Nofix"]
+keywords = ["pe", "portable-executable", "rpecli"]
+readme = "README.md"
 
 [dependencies]
 argparse = "0.2.2"
