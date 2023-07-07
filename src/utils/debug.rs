@@ -101,7 +101,6 @@ impl<'a> fmt::Display for CodeView<'a> {
     }
 }
 
-
 pub fn display_debug_info(pe: &VecPE) {
     const VC20: &[u8; 4] = b"NB10";
     const VC70: &[u8; 4] = b"RSDS";
@@ -152,8 +151,10 @@ pub fn display_debug_info(pe: &VecPE) {
             println!("{:#}", cv);
         }
         _ => {
-            println!("Unknown debug directory type number {}", debug_directory.type_);
+            println!(
+                "Unknown debug directory type number {}",
+                debug_directory.type_
+            );
         }
     };
 }
-

@@ -1,6 +1,6 @@
-use std::{u64::MAX, error::Error};
+use std::{error::Error, u64::MAX};
 
-use exe::{VecPE, PE, ImageSubsystem};
+use exe::{ImageSubsystem, VecPE, PE};
 
 use crate::utils::pe_size::get_pe_file_size;
 
@@ -24,7 +24,7 @@ pub fn safe_read<P: PE>(pe: &P, offset: usize, size: usize) -> &[u8] {
 
     let safe_size = round_to_pe_sz_with_offset(pe, offset, size);
     // if offset + safe_size == pe_sz {
-        // return &[];
+    // return &[];
     // }
     pe.read(offset, safe_size).unwrap()
 }
@@ -34,21 +34,21 @@ pub struct ImageSubsystem_rpecli(pub ImageSubsystem);
 impl From<u16> for ImageSubsystem_rpecli {
     fn from(value: u16) -> Self {
         match value {
-            1  => ImageSubsystem_rpecli(ImageSubsystem::Native),
-            2  => ImageSubsystem_rpecli(ImageSubsystem::WindowsGUI),
-            3  => ImageSubsystem_rpecli(ImageSubsystem::WindowsCUI),
-            4  => ImageSubsystem_rpecli(ImageSubsystem::OS2CUI),
-            5  => ImageSubsystem_rpecli(ImageSubsystem::POSIXCUI),
-            6  => ImageSubsystem_rpecli(ImageSubsystem::NativeWindows),
-            7  => ImageSubsystem_rpecli(ImageSubsystem::WindowsCEGUI),
-            8  => ImageSubsystem_rpecli(ImageSubsystem::EFIApplication),
-            9  => ImageSubsystem_rpecli(ImageSubsystem::EFIBootServiceDriver),
+            1 => ImageSubsystem_rpecli(ImageSubsystem::Native),
+            2 => ImageSubsystem_rpecli(ImageSubsystem::WindowsGUI),
+            3 => ImageSubsystem_rpecli(ImageSubsystem::WindowsCUI),
+            4 => ImageSubsystem_rpecli(ImageSubsystem::OS2CUI),
+            5 => ImageSubsystem_rpecli(ImageSubsystem::POSIXCUI),
+            6 => ImageSubsystem_rpecli(ImageSubsystem::NativeWindows),
+            7 => ImageSubsystem_rpecli(ImageSubsystem::WindowsCEGUI),
+            8 => ImageSubsystem_rpecli(ImageSubsystem::EFIApplication),
+            9 => ImageSubsystem_rpecli(ImageSubsystem::EFIBootServiceDriver),
             10 => ImageSubsystem_rpecli(ImageSubsystem::EFIRuntimeDriver),
             11 => ImageSubsystem_rpecli(ImageSubsystem::EFIROM),
             12 => ImageSubsystem_rpecli(ImageSubsystem::XBox),
             13 => ImageSubsystem_rpecli(ImageSubsystem::WindowsBootApplication),
             14 => ImageSubsystem_rpecli(ImageSubsystem::XBoxCodeCatalog),
-            _  => ImageSubsystem_rpecli(ImageSubsystem::Unknown),
+            _ => ImageSubsystem_rpecli(ImageSubsystem::Unknown),
         }
     }
 }
@@ -77,12 +77,12 @@ impl ImageSubsystem_rpecli {
 
 pub fn get_subsystem<P: PE>(pe: &P) -> Result<ImageSubsystem_rpecli, Box<dyn Error>> {
     let arch = pe.get_arch()?;
-    match arch{
-        exe::Arch::X86 => {
-            Ok(ImageSubsystem_rpecli::from(pe.get_nt_headers_32()?.optional_header.subsystem))
-        },
-        exe::Arch::X64 => {
-            Ok(ImageSubsystem_rpecli::from(pe.get_nt_headers_64()?.optional_header.subsystem))
-        },
+    match arch {
+        exe::Arch::X86 => Ok(ImageSubsystem_rpecli::from(
+            pe.get_nt_headers_32()?.optional_header.subsystem,
+        )),
+        exe::Arch::X64 => Ok(ImageSubsystem_rpecli::from(
+            pe.get_nt_headers_64()?.optional_header.subsystem,
+        )),
     }
 }

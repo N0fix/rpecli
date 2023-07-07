@@ -1,14 +1,14 @@
 use colored::Colorize;
 use exe::{FileCharacteristics, VecPE, PE};
 
-use crate::util::get_subsystem;
-use crate::{color_format_if, alert_format, warn_format, alert_format_if, warn_format_if};
 use crate::import_export::{display_exports, display_imports};
 use crate::rich::display_rich;
 use crate::sig::display_sig;
+use crate::util::get_subsystem;
 use crate::utils::debug::display_debug_info;
 use crate::utils::rsrc::display_rsrc;
 use crate::utils::sections::{display_sections, get_section_name_from_offset};
+use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 
 use crate::utils::hash::display_hashes;
 use crate::utils::tls::display_tls;
@@ -25,7 +25,6 @@ fn get_type(pe: &VecPE) -> &str {
         false => "PE",
     }
 }
-
 
 pub fn display_info(pe_filepath: &str) {
     let Ok(image) = VecPE::from_disk_file(pe_filepath) else {
@@ -77,17 +76,15 @@ pub fn display_info(pe_filepath: &str) {
         println!("{}", "Invalid NT headers".red().bold());
         return;
     };
-    let ep_section =
-        match get_section_name_from_offset(entrypoint.0 as u64, &image) {
-            Ok(s) => s,
-            Err(_) => String::from("Not in a section"),
-        };
-    println!("Subsystem:      {}", get_subsystem(&image).unwrap().as_string() );
+    let ep_section = match get_section_name_from_offset(entrypoint.0 as u64, &image) {
+        Ok(s) => s,
+        Err(_) => String::from("Not in a section"),
+    };
     println!(
-        "Entrypoint:     {:#x} => {}\n",
-        entrypoint.0,
-        ep_section
+        "Subsystem:      {}",
+        get_subsystem(&image).unwrap().as_string()
     );
+    println!("Entrypoint:     {:#x} => {}\n", entrypoint.0, ep_section);
     println!("");
     println!("Signature:\n{}", "=".repeat(if true { 80 } else { 0 }));
 
@@ -115,7 +112,7 @@ pub fn display_info(pe_filepath: &str) {
 
     println!("");
     println!("Resources:\n{}", "=".repeat(if true { 80 } else { 0 }));
-    display_rsrc(&image);
+    display_rsrc(&image, true);
 
     println!("");
     println!("TLS callbacks:\n{}", "=".repeat(if true { 80 } else { 0 }));

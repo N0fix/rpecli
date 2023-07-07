@@ -1,7 +1,6 @@
 use crate::utils::sections::get_section_name_from_offset;
 use colored::Colorize;
-use exe::{ImageTLSDirectory32, ImageTLSDirectory64, VecPE, PE, Address};
-
+use exe::{Address, ImageTLSDirectory32, ImageTLSDirectory64, VecPE, PE};
 
 fn handle_callbacks<A: Address, P: PE>(callbacks: &[A], pe: &P) {
     if callbacks.len() == 0 {
@@ -20,7 +19,6 @@ fn handle_callbacks<A: Address, P: PE>(callbacks: &[A], pe: &P) {
         println!("\t{} => {}", callback_va, matching_section_name);
     }
 }
-
 
 pub fn display_tls<P: PE>(pe: &P) {
     match pe.get_arch().unwrap() {

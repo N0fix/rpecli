@@ -1,4 +1,7 @@
+use std::fmt::Display;
+
 use crate::utils::rich_utils::{ObjectKind, RichIter, RichRecord, RichStructure};
+use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 use bytemuck::cast_slice;
 use colored::Colorize;
 use exe::VecPE;
@@ -6,7 +9,6 @@ use phf::phf_map;
 use term_table::row::Row;
 use term_table::table_cell::TableCell;
 use term_table::Table;
-
 /// From https://github.com/RichHeaderResearch/RichPE/blob/master/spoof_check.py
 /// (Thanks !)
 static KNOWN_PRODUCT_IDS: phf::Map<u16, &'static str> = phf_map! {
@@ -277,77 +279,130 @@ fn lookup_vs_version(product_id: u16) -> &'static str {
     }
 }
 
-pub fn display_rich(pe: &VecPE) {
-    let ptr_buf = pe.get_buffer().as_ref();
-    if ptr_buf.len() < 0x400 {
-        println!("No rich headers");
-        return;
-    }
-    let rich_header = match RichStructure::try_from(cast_slice(&ptr_buf[0..0x400])) {
-        Ok(rich) => rich,
-        Err(_) => {
-            println!("No rich headers");
-            return;
+struct Rich<'rich_data> {
+    product_name: &'rich_data str,
+    build: u16,
+    product_id: u16,
+    count: u32,
+    guessed_visual_studio_version: &'rich_data str,
+}
+
+impl Rich<'_> {
+    pub fn parse_pe(pe: &VecPE) -> RichTable {
+        let mut rich_table: RichTable = RichTable {
+            rich_headers: vec![],
+        };
+        let ptr_buf = pe.get_buffer().as_ref();
+        if ptr_buf.len() < 0x400 {
+            return rich_table;
         }
-    };
-    let mut table = Table::new();
-    table.max_column_width = term_size::dimensions()
-        .or_else(|| Some((4000, 4000)))
-        .unwrap()
-        .0;
+        let rich_header = match RichStructure::try_from(cast_slice(&ptr_buf[0..0x400])) {
+            Ok(rich) => rich,
+            Err(_) => {
+                return rich_table;
+            }
+        };
 
-    table.add_row(Row::new(vec![
-        TableCell::new_with_alignment(
-            "Product Name".bold(),
-            1,
-            term_table::table_cell::Alignment::Left,
-        ),
-        TableCell::new_with_alignment("Build".bold(), 1, term_table::table_cell::Alignment::Left),
-        TableCell::new_with_alignment(
-            "Product ID".bold(),
-            1,
-            term_table::table_cell::Alignment::Left,
-        ),
-        TableCell::new_with_alignment("Count".bold(), 1, term_table::table_cell::Alignment::Left),
-        TableCell::new_with_alignment(
-            "Guessed Visual Studio version".bold(),
-            1,
-            term_table::table_cell::Alignment::Left,
-        ),
-    ]));
+        for record in rich_header.records() {
+            let product_name = KNOWN_PRODUCT_IDS
+                .contains_key(&record.product)
+                .then(|| KNOWN_PRODUCT_IDS[&record.product])
+                .or_else(|| Some(""))
+                .unwrap();
 
-    for record in rich_header.records() {
-        let product_name = KNOWN_PRODUCT_IDS
-            .contains_key(&record.product)
-            .then(|| KNOWN_PRODUCT_IDS[&record.product])
-            .or_else(|| Some(""))
-            .unwrap();
+            rich_table.rich_headers.push(Rich {
+                product_name: product_name,
+                build: record.build,
+                product_id: record.product,
+                count: record.count,
+                guessed_visual_studio_version: lookup_vs_version(record.product),
+            })
+        }
+
+        rich_table
+    }
+}
+
+struct RichTable<'rich_data> {
+    rich_headers: Vec<Rich<'rich_data>>,
+}
+
+impl Display for RichTable<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.rich_headers.len() == 0 {
+            return write!(f, "{}", warn_format!("No rich headers"));
+        }
+
+        let mut table = Table::new();
+        table.max_column_width = term_size::dimensions()
+            .or_else(|| Some((4000, 4000)))
+            .unwrap()
+            .0;
+        table.style = term_table::TableStyle::empty();
+        table.separate_rows = false;
+
         table.add_row(Row::new(vec![
-            TableCell::new_with_alignment(product_name, 1, term_table::table_cell::Alignment::Left),
             TableCell::new_with_alignment(
-                &record.build,
+                "Product Name".bold(),
                 1,
                 term_table::table_cell::Alignment::Left,
             ),
             TableCell::new_with_alignment(
-                &record.product,
+                "Build".bold(),
                 1,
                 term_table::table_cell::Alignment::Left,
             ),
             TableCell::new_with_alignment(
-                &record.count,
+                "Product ID".bold(),
                 1,
                 term_table::table_cell::Alignment::Left,
             ),
             TableCell::new_with_alignment(
-                lookup_vs_version(record.product),
+                "Count".bold(),
+                1,
+                term_table::table_cell::Alignment::Left,
+            ),
+            TableCell::new_with_alignment(
+                "Guessed Visual Studio version".bold(),
                 1,
                 term_table::table_cell::Alignment::Left,
             ),
         ]));
+
+        for rich in self.rich_headers.iter() {
+            table.add_row(Row::new(vec![
+                TableCell::new_with_alignment(
+                    &rich.product_name,
+                    1,
+                    term_table::table_cell::Alignment::Left,
+                ),
+                TableCell::new_with_alignment(
+                    &rich.build,
+                    1,
+                    term_table::table_cell::Alignment::Left,
+                ),
+                TableCell::new_with_alignment(
+                    &rich.product_id,
+                    1,
+                    term_table::table_cell::Alignment::Left,
+                ),
+                TableCell::new_with_alignment(
+                    &rich.count,
+                    1,
+                    term_table::table_cell::Alignment::Left,
+                ),
+                TableCell::new_with_alignment(
+                    &rich.guessed_visual_studio_version,
+                    1,
+                    term_table::table_cell::Alignment::Left,
+                ),
+            ]));
+        }
+        write!(f, "{}", table.render())
     }
-    table.style = term_table::TableStyle::empty();
-    table.separate_rows = false;
-    // table.style = term_table::TableStyle::thin();
-    println!("{}", table.render());
+}
+
+pub fn display_rich(pe: &VecPE) {
+    let richs = Rich::parse_pe(pe);
+    println!("{}", richs);
 }

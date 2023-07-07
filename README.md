@@ -7,20 +7,31 @@ Rust blazing fast alternative to [pecli](https://github.com/Te-k/pecli). `pecli`
 cargo build --release
 ```
 
+## Install
+```
+cargo install rpecli
+```
+or locally :
+```
+cargo install --path .
+```
+
 ## Usage
 ```
 rpecli info path_to_exe
 ```
+```
+rpecli --help
+```
 
 ## TODO
-- Fix sections (I think some section dumps are buggy)
+- Refacto of some parts
 - Credits of portions of code are missing (I think I'm missing references to pelite)
 - Error handling
 - More commands
 - Possiblity to dump resources
 - Color on sections
 - Feature to handle comparing some fields between multiple binaries to help finding header similarities
-- Refacto of some parts
 
 ### Optimisation notes
 

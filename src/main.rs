@@ -5,15 +5,16 @@ use exe::{Buffer, SectionCharacteristics};
 extern crate argparse;
 use argparse::{ArgumentParser, Store};
 mod commands;
+mod format;
 mod import_export;
 mod rich;
 mod sig;
 mod util;
 mod utils;
-mod format;
 use crate::commands::import_export::display_import_export;
 use crate::commands::info::display_info;
 use crate::commands::resource::display_ressource;
+use crate::commands::sig::display_signature;
 use crate::import_export::{display_exports, display_imports};
 use crate::rich::display_rich;
 use crate::sig::{display_sig, display_version_info};
@@ -33,33 +34,40 @@ enum CliSub {
     Info(PEArgs),
     ImportExport(PEArgs),
     Rsrc(PEArgs),
+    Sig(PEArgs),
 }
 
 impl FromArgMatches for CliSub {
     fn from_arg_matches(matches: &ArgMatches) -> Result<Self, Error> {
         match matches.subcommand() {
             Some(("info", args)) => Ok(Self::Info(PEArgs::from_arg_matches(args)?)),
-            Some(("import_export", args)) => Ok(Self::ImportExport(PEArgs::from_arg_matches(args)?)),
+            Some(("import_export", args)) => {
+                Ok(Self::ImportExport(PEArgs::from_arg_matches(args)?))
+            }
             Some(("rsrc", args)) => Ok(Self::Rsrc(PEArgs::from_arg_matches(args)?)),
+            Some(("sig", args)) => Ok(Self::Sig(PEArgs::from_arg_matches(args)?)),
             Some((_, _)) => Err(Error::raw(
                 ErrorKind::InvalidSubcommand,
-                "Valid subcommands are `info` `import_export` `rsrc` ",
+                "Valid subcommands are `info` `import_export` `rsrc` `sig` ",
             )),
             None => Err(Error::raw(
                 ErrorKind::MissingSubcommand,
-                "Valid subcommands are `info` `import_export` `rsrc` ",
+                "Valid subcommands are `info` `import_export` `rsrc` `sig` ",
             )),
         }
     }
     fn update_from_arg_matches(&mut self, matches: &ArgMatches) -> Result<(), Error> {
         match matches.subcommand() {
             Some(("info", args)) => *self = Self::Info(PEArgs::from_arg_matches(args)?),
-            Some(("import_export", args)) => *self = Self::ImportExport(PEArgs::from_arg_matches(args)?),
+            Some(("import_export", args)) => {
+                *self = Self::ImportExport(PEArgs::from_arg_matches(args)?)
+            }
             Some(("rsrc", args)) => *self = Self::Rsrc(PEArgs::from_arg_matches(args)?),
+            Some(("sig", args)) => *self = Self::Rsrc(PEArgs::from_arg_matches(args)?),
             Some((_, _)) => {
                 return Err(Error::raw(
                     ErrorKind::InvalidSubcommand,
-                    "Valid subcommands are `info` `import_export` `rsrc` ",
+                    "Valid subcommands are `info` `import_export` `rsrc` `sig`",
                 ))
             }
             None => (),
@@ -73,29 +81,32 @@ impl Subcommand for CliSub {
         cmd.subcommand(PEArgs::augment_args(Command::new("info")))
             .subcommand(PEArgs::augment_args(Command::new("import_export")))
             .subcommand(PEArgs::augment_args(Command::new("rsrc")))
+            .subcommand(PEArgs::augment_args(Command::new("sig")))
             .subcommand_required(true)
-        }
-        fn augment_subcommands_for_update(cmd: Command) -> Command {
-            cmd.subcommand(PEArgs::augment_args(Command::new("info")))
+    }
+    fn augment_subcommands_for_update(cmd: Command) -> Command {
+        cmd.subcommand(PEArgs::augment_args(Command::new("info")))
             .subcommand(PEArgs::augment_args(Command::new("import_export")))
             .subcommand(PEArgs::augment_args(Command::new("rsrc")))
+            .subcommand(PEArgs::augment_args(Command::new("sig")))
             .subcommand_required(true)
     }
     fn has_subcommand(name: &str) -> bool {
-        matches!(name, "info" | "import_export | rsrc")
+        matches!(name, "info" | "import_export | rsrc | sig")
     }
 }
 
 #[derive(Parser, Debug)]
 struct Cli {
     #[arg(short, long)]
-    top_level: bool,
+    no_hashes: bool,
     #[command(subcommand)]
     subcommand: CliSub,
 }
 
 fn main() {
     let args = Cli::parse();
+    let hashes = if args.no_hashes { false } else { true };
     println!("{args:#?}");
     match args.subcommand {
         CliSub::Info(args) => {
@@ -103,50 +114,12 @@ fn main() {
         }
         CliSub::ImportExport(args) => {
             display_import_export(&args.pe);
-        },
+        }
         CliSub::Rsrc(args) => {
-            display_ressource(&args.pe);
-        },
+            display_ressource(&args.pe, hashes);
+        }
+        CliSub::Sig(args) => {
+            display_signature(&args.pe);
+        }
     };
-
-    return;
-
-    let mut pe_filepath = String::default();
-    {
-        // this block limits scope of borrows by ap.refer() method
-        let mut ap = ArgumentParser::new();
-        ap.set_description("PE cli info");
-        ap.refer(&mut pe_filepath)
-            .add_argument("pe_filepath", Store, "")
-            .required();
-        ap.parse_args_or_exit();
-    }
-    let Ok(image) = VecPE::from_disk_file(pe_filepath) else {
-        println!("{}", alert_format!(format!("Could not read {}", pe_filepath)));
-        return;
-    };
-    // dbg!(pe_filepath);
-    println!("Sections:\n==============================================");
-    display_sections(&image);
-    println!("");
-
-    println!("PE Info:\n==============================================");
-    let pe_size = get_pe_size(&image);
-    println!(
-        "File size {:#x}, pe size {:#x}\n",
-        image.as_slice().len(),
-        pe_size
-    );
-
-    println!("Imports:\n==============================================");
-    display_imports(&image);
-    println!("");
-    println!("Exports:\n==============================================");
-    display_exports(&image);
-
-    // display_version_info(&image);
-
-    display_sig(&image);
-
-    display_rich(&image);
 }
