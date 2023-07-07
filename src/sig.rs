@@ -1,57 +1,18 @@
-use std::{collections::HashMap, fmt::Display, mem};
+use std::{collections::HashMap, mem, fmt::Display};
 
-use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
-use colored::Colorize;
 use exe::{
     pe, Address, ImageDataDirectory, VSFixedFileInfo, VSStringFileInfo, VSStringTable,
     VSVersionInfo, VecPE, WCharString, PE, RVA,
 };
+use colored::Colorize;
+use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 use term_table::row::Row;
 use term_table::table_cell::TableCell;
 use term_table::Table;
 
 use crate::util::safe_read;
-use authenticode::{AttributeCertificateIterator, AuthenticodeSignature, PeOffsets, PeTrait};
+use authenticode::{AttributeCertificateIterator, PeOffsets, PeTrait, AuthenticodeSignature};
 use cms::signed_data::SignerIdentifier;
-fn string_vec(string_file_info: &VSStringFileInfo) -> Result<Vec<(String, String)>, exe::Error> {
-    let mut result = Vec::<(String, String)>::new();
-
-    for entry in &string_file_info.children[0].children {
-        let entry_key = entry.header.key.as_u16_str()?;
-        let entry_value = entry.value.as_u16_str()?;
-
-        result.push((
-            entry_key.as_ustr().to_string_lossy(),
-            entry_value.as_ustr().to_string_lossy(),
-        ));
-    }
-
-    Ok(result)
-}
-
-pub fn display_version_info(pe: &VecPE) {
-    let vs_version_check = VSVersionInfo::parse(pe);
-    let vs_version = vs_version_check.unwrap();
-    if let Some(string_file_info) = vs_version.string_file_info {
-        let infos = string_vec(&string_file_info).unwrap();
-
-        let string_map = string_file_info.children[0].string_map().unwrap();
-        let mut table = Table::new();
-        table.max_column_width = term_size::dimensions()
-            .or_else(|| Some((4000, 4000)))
-            .unwrap()
-            .0;
-        for (key, value) in infos.into_iter() {
-            table.add_row(Row::new(vec![
-                TableCell::new_with_alignment(key, 1, term_table::table_cell::Alignment::Left),
-                TableCell::new_with_alignment(value, 1, term_table::table_cell::Alignment::Right),
-            ]));
-        }
-        println!("{}", table.render());
-    } else {
-        panic!("couldn't get string file info");
-    }
-}
 
 struct PEForParsing {
     pe: exe::pe::VecPE,
@@ -138,12 +99,14 @@ impl PeTrait for PEForParsing {
 }
 
 struct PeSig {
-    signatures: Vec<AuthenticodeSignature>,
+    signatures: Vec<AuthenticodeSignature>
 }
 
 impl PeSig {
     pub fn parse_pe(pe: &VecPE) -> PeSig {
-        let mut result = PeSig { signatures: vec![] };
+        let mut result = PeSig {
+            signatures: vec![]
+        };
         let security_dir = match pe.get_data_directory(exe::ImageDirectoryEntry::Security) {
             Ok(security_dir) => security_dir,
             Err(_) => return result,
@@ -152,15 +115,14 @@ impl PeSig {
             return result;
         } else {
             let peparse = PEForParsing { pe: pe.clone() };
-
+    
             result = match AttributeCertificateIterator::new(&peparse).unwrap() {
-                Some(s) => PeSig {
-                    signatures: s
-                        .map(|attr_cert| attr_cert.get_authenticode_signature())
-                        .collect::<Result<Vec<_>, _>>()
-                        .unwrap(),
-                },
-                None => PeSig { signatures: vec![] },
+            Some(s) => PeSig { signatures: s.map(|attr_cert| attr_cert.get_authenticode_signature())
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap() },
+                None => PeSig {
+                    signatures: vec![]
+                }
             };
         }
 
@@ -194,11 +156,7 @@ impl Display for PeSig {
 
                 writeln!(f, "    Issuer:        {}", cert.tbs_certificate.issuer)?;
                 writeln!(f, "    Subject:       {}", cert.tbs_certificate.subject)?;
-                writeln!(
-                    f,
-                    "    Serial number: {}",
-                    cert.tbs_certificate.serial_number
-                )?;
+                writeln!(f, "    Serial number: {}", cert.tbs_certificate.serial_number)?;
             }
         }
         writeln!(f, "")
