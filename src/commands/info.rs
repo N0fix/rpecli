@@ -3,11 +3,11 @@ use exe::{FileCharacteristics, VecPE, PE};
 
 use crate::import_export::{display_exports, display_imports};
 use crate::rich::display_rich;
-use crate::sig::display_sig;
 use crate::util::get_subsystem;
 use crate::utils::debug::display_debug_info;
 use crate::utils::rsrc::display_rsrc;
 use crate::utils::sections::{display_sections, get_section_name_from_offset};
+use crate::utils::sig::display_sig;
 use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 
 use crate::utils::hash::display_hashes;

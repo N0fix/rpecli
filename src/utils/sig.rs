@@ -1,17 +1,17 @@
-use std::{collections::HashMap, mem, fmt::Display};
+use std::{collections::HashMap, fmt::Display, mem};
 
+use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
+use colored::Colorize;
 use exe::{
     pe, Address, ImageDataDirectory, VSFixedFileInfo, VSStringFileInfo, VSStringTable,
     VSVersionInfo, VecPE, WCharString, PE, RVA,
 };
-use colored::Colorize;
-use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 use term_table::row::Row;
 use term_table::table_cell::TableCell;
 use term_table::Table;
 
 use crate::util::safe_read;
-use authenticode::{AttributeCertificateIterator, PeOffsets, PeTrait, AuthenticodeSignature};
+use authenticode::{AttributeCertificateIterator, AuthenticodeSignature, PeOffsets, PeTrait};
 use cms::signed_data::SignerIdentifier;
 
 struct PEForParsing {
@@ -99,14 +99,12 @@ impl PeTrait for PEForParsing {
 }
 
 struct PeSig {
-    signatures: Vec<AuthenticodeSignature>
+    signatures: Vec<AuthenticodeSignature>,
 }
 
 impl PeSig {
     pub fn parse_pe(pe: &VecPE) -> PeSig {
-        let mut result = PeSig {
-            signatures: vec![]
-        };
+        let mut result = PeSig { signatures: vec![] };
         let security_dir = match pe.get_data_directory(exe::ImageDirectoryEntry::Security) {
             Ok(security_dir) => security_dir,
             Err(_) => return result,
@@ -115,14 +113,15 @@ impl PeSig {
             return result;
         } else {
             let peparse = PEForParsing { pe: pe.clone() };
-    
+
             result = match AttributeCertificateIterator::new(&peparse).unwrap() {
-            Some(s) => PeSig { signatures: s.map(|attr_cert| attr_cert.get_authenticode_signature())
-                .collect::<Result<Vec<_>, _>>()
-                .unwrap() },
-                None => PeSig {
-                    signatures: vec![]
-                }
+                Some(s) => PeSig {
+                    signatures: s
+                        .map(|attr_cert| attr_cert.get_authenticode_signature())
+                        .collect::<Result<Vec<_>, _>>()
+                        .unwrap(),
+                },
+                None => PeSig { signatures: vec![] },
             };
         }
 
@@ -139,7 +138,7 @@ impl Display for PeSig {
         for (signature_index, s) in self.signatures.iter().enumerate() {
             writeln!(f, "Signature {signature_index}:")?;
 
-            write!(f, "  Digest: ")?;
+            write!(f, "  Signature digest: ")?;
             for byte in s.digest() {
                 write!(f, "{byte:02x}")?;
             }
@@ -156,7 +155,11 @@ impl Display for PeSig {
 
                 writeln!(f, "    Issuer:        {}", cert.tbs_certificate.issuer)?;
                 writeln!(f, "    Subject:       {}", cert.tbs_certificate.subject)?;
-                writeln!(f, "    Serial number: {}", cert.tbs_certificate.serial_number)?;
+                writeln!(
+                    f,
+                    "    Serial number: {}",
+                    cert.tbs_certificate.serial_number
+                )?;
             }
         }
         writeln!(f, "")

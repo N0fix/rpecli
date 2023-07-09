@@ -8,7 +8,6 @@ mod commands;
 mod format;
 mod import_export;
 mod rich;
-mod sig;
 mod util;
 mod utils;
 use crate::commands::import_export::display_import_export;
@@ -17,9 +16,9 @@ use crate::commands::resource::display_ressource;
 use crate::commands::sig::display_signature;
 use crate::import_export::{display_exports, display_imports};
 use crate::rich::display_rich;
-use crate::sig::display_sig;
 use crate::utils::pe_size::get_pe_size;
 use crate::utils::sections::display_sections;
+use crate::utils::sig::display_sig;
 // https://github.com/clap-rs/clap/blob/master/examples/derive_ref/hand_subcommand.rs
 use clap::error::{Error, ErrorKind};
 use clap::{ArgMatches, Args as _, Command, FromArgMatches, Parser, Subcommand};
