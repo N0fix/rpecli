@@ -2,7 +2,7 @@ use colored::Colorize;
 use exe::{FileCharacteristics, VecPE, PE};
 
 use crate::import_export::{display_exports, display_imports};
-use crate::rich::display_rich;
+use crate::utils::rich::display_rich;
 use crate::util::get_subsystem;
 use crate::utils::debug::display_debug_info;
 use crate::utils::rsrc::display_rsrc;
@@ -77,8 +77,8 @@ pub fn display_info(pe_filepath: &str) {
         return;
     };
     let ep_section = match get_section_name_from_offset(entrypoint.0 as u64, &image) {
-        Ok(s) => s,
-        Err(_) => String::from("Not in a section"),
+        Some(s) => s,
+        None => String::from("Not in a section"),
     };
     println!(
         "Subsystem:      {}",

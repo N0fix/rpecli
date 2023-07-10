@@ -271,19 +271,16 @@ pub fn display_sections(pe: &VecPE) {
     println!("{}", Section::parse_pe(pe));
 }
 
-pub fn get_section_name_from_offset<P: PE>(offset: u64, pe: &P) -> Result<String, exe::Error> {
-    let sections = match pe.get_section_table() {
-        Ok(sections) => sections,
-        Err(_) => panic!("Could not parse section table ! Is your file a PE file?"),
-    };
+pub fn get_section_name_from_offset(offset: u64, pe: &VecPE) -> Option<String> {
+    let sections = Section::parse_pe(pe);
 
-    for section in sections {
-        if offset >= (section.virtual_address.0 as u64)
-            && ((offset) < (section.virtual_size as u64 + section.virtual_address.0 as u64))
+    for section in sections.sections {
+        if offset >= (section.virt_addr as u64)
+            && ((offset) < (section.virt_size as u64 + section.virt_addr as u64))
         {
-            return Ok(section.name.as_str().unwrap().to_owned());
+            return Some(section.name.to_owned());
         }
     }
 
-    Err(exe::Error::SectionNotFound)
+    None
 }

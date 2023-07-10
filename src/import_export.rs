@@ -45,7 +45,7 @@ pub fn display_imports(pe: &VecPE) -> Result<(), exe::Error> {
         };
         for import_data in import_entries {
             let import_name = match import_data {
-                ImportData::Ordinal(x) => x.to_string(),
+                ImportData::Ordinal(x) => format!("{:8} (Import by ordinal)", x.to_string()),
                 ImportData::ImportByName(s) => s.to_string(),
             };
             println!("\t{import_name}");
@@ -114,7 +114,7 @@ pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
             Ok(s) => String::from(s),
             Err(_) => "Invalid non ASCII export binary name".red().to_string(),
         };
-        print!("\n{} - ", export_bin_name.bold());
+        print!("\n\"{}\" => ", export_bin_name.bold());
     }
 
     let Ok(exports) = get_export_map_test(export_table, pe) else {
@@ -172,5 +172,5 @@ fn calculate_exphash<P: PE>(pe: &P) -> Result<Vec<u8>, exe::Error> {
         .as_str()
         .to_lowercase()
         .as_bytes()
-        .sha256())
+        .md5())
 }

@@ -7,3 +7,4 @@ pub mod rsrc;
 pub mod sections;
 pub mod sig;
 pub mod tls;
+pub mod rich;
