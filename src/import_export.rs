@@ -1,5 +1,7 @@
 use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use colored::Colorize;
+use dataview::PodMethods;
 use exe::headers::ImageImportDescriptor;
 use exe::{
     CCharString, ExportDirectory, HashData, ImageDirectoryEntry, ImageExportDirectory,
@@ -65,13 +67,14 @@ pub fn get_export_map_test<'data, P: PE>(
 ) -> Result<Vec<(u16, &'data str)>, Box<dyn Error>> {
     let mut result: Vec<(u16, &'data str)> = vec![];
 
-    // let directory = pe.get_data_directory(ImageDirectoryEntry::Export)?;
-    // let start = directory.virtual_address.clone();
-    // let end = RVA(start.0 + directory.size);
+    let directory = pe.get_data_directory(ImageDirectoryEntry::Export)?;
+    let start = directory.virtual_address.clone();
+    let end = RVA(start.0 + directory.size);
 
-    // let functions = s.get_functions(pe)?;
+    let functions = s.get_functions(pe)?;
     let names = s.get_names(pe)?;
     let ordinals = s.get_name_ordinals(pe)?;
+    // let funcs = s.get_functions(pe)?;
 
     for index in 0u32..s.number_of_names {
         let name_rva = names[index as usize];
@@ -88,7 +91,8 @@ pub fn get_export_map_test<'data, P: PE>(
         };
 
         let ordinal = ordinals[index as usize];
-        // let function = functions[ordinal as usize].parse_export(start, end);
+        let function = functions[ordinal as usize].parse_export(start, end);
+        // dbg!(function);
 
         let name_str = match name.as_str() {
             Ok(s) => s,
@@ -109,6 +113,7 @@ pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
             return Err(exe::Error::BadDirectory(ImageDirectoryEntry::Export));
         }
     };
+
     if let Ok(name) = export_table.get_name(pe) {
         let export_bin_name = match name.as_str() {
             Ok(s) => String::from(s),
@@ -122,19 +127,19 @@ pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
         return Ok(());
     };
     println!("{} exported function(s)", exports.len());
-    let export_string: String = exports
-        .iter()
-        .map(|(_, s)| {
-            if *s != "DllRegisterServer" {
-                String::from(s.to_owned())
-            } else {
-                String::from("")
-            }
-        })
-        .collect();
-    let exports_ngram = NgramBuilder::new(export_string.as_str()).finish();
-    let exports_ngram_vec: Vec<usize> = exports_ngram.grams.iter().map(|(x, y)| *y).collect();
-    let avg: f32 = exports_ngram_vec.iter().sum::<usize>() as f32 / exports_ngram_vec.len() as f32;
+    // let export_string: String = exports
+    //     .iter()
+    //     .map(|(_, s)| {
+    //         if *s != "DllRegisterServer" {
+    //             String::from(s.to_owned())
+    //         } else {
+    //             String::from("")
+    //         }
+    //     })
+    //     .collect();
+    // let exports_ngram = NgramBuilder::new(export_string.as_str()).finish();
+    // let exports_ngram_vec: Vec<usize> = exports_ngram.grams.iter().map(|(x, y)| *y).collect();
+    // let avg: f32 = exports_ngram_vec.iter().sum::<usize>() as f32 / exports_ngram_vec.len() as f32;
     // println!("avg {}", avg);
     // exports_ngram_vec.sort_by(|a, b| b.1.cmp(a.1));
     // let weird_exports: bool = exports.len() >= 2 && exports_ngram_vec.first().unwrap().1 < &3;
@@ -152,7 +157,14 @@ pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
     }
 
     println!("\nexphash: {}", hex::encode(calculate_exphash(pe).unwrap()));
-
+    let naive = NaiveDateTime::from_timestamp_opt(export_table.time_date_stamp.into(), 0).unwrap();
+    let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+    println!(
+        "Export timestamp: {} (Timestamp: {} ({:#x}))",
+        datetime.format("%Y-%m-%d %H:%M:%S"),
+        export_table.time_date_stamp as i64,
+        export_table.time_date_stamp as i64,
+    );
     Ok(())
 }
 

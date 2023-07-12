@@ -31,5 +31,11 @@ cms = { version = "0.2.0", default-features = false }
 bitflags = "2.3.3"
 pkbuffer = "0.4.2"
 
+[dependencies.iced-x86]
+version = "1.19.0"
+default-features = false
+# See below for all features
+features = ["std", "decoder", "intel"]
+
 [profile.release]
 strip = "none"

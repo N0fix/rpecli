@@ -5,6 +5,7 @@ use exe::{Buffer, SectionCharacteristics};
 extern crate argparse;
 use argparse::{ArgumentParser, Store};
 mod commands;
+mod disassembler;
 mod format;
 mod import_export;
 mod util;
@@ -14,8 +15,8 @@ use crate::commands::info::display_info;
 use crate::commands::resource::display_ressource;
 use crate::commands::sig::display_signature;
 use crate::import_export::{display_exports, display_imports};
-use crate::utils::rich::display_rich;
 use crate::utils::pe_size::get_pe_size;
+use crate::utils::rich::display_rich;
 use crate::utils::sections::display_sections;
 use crate::utils::sig::display_sig;
 // https://github.com/clap-rs/clap/blob/master/examples/derive_ref/hand_subcommand.rs

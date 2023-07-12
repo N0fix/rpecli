@@ -1,10 +1,10 @@
 pub mod debug;
 pub mod hash;
 pub mod pe_size;
+pub mod rich;
 pub mod rich_utils;
 pub mod rich_utils_err;
 pub mod rsrc;
 pub mod sections;
 pub mod sig;
 pub mod tls;
-pub mod rich;

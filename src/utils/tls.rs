@@ -3,7 +3,7 @@ use colored::Colorize;
 use exe::{Address, ImageTLSDirectory32, ImageTLSDirectory64, VecPE, PE};
 
 struct TLSCallbacks {
-    callbacks: Vec<u64>
+    callbacks: Vec<u64>,
 }
 //wip
 // impl TLSCallbacks {

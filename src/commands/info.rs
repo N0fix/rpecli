@@ -1,10 +1,11 @@
 use colored::Colorize;
-use exe::{FileCharacteristics, VecPE, PE};
+use exe::{Address, FileCharacteristics, VecPE, PE};
 
+use crate::disassembler::disass::how_to_disassemble;
 use crate::import_export::{display_exports, display_imports};
-use crate::utils::rich::display_rich;
 use crate::util::get_subsystem;
 use crate::utils::debug::display_debug_info;
+use crate::utils::rich::display_rich;
 use crate::utils::rsrc::display_rsrc;
 use crate::utils::sections::{display_sections, get_section_name_from_offset};
 use crate::utils::sig::display_sig;
@@ -32,7 +33,7 @@ pub fn display_info(pe_filepath: &str) {
         return;
     };
     println!("Metadata:\n{}", "=".repeat(if true { 80 } else { 0 }));
-    // display_hashes(&image);
+    display_hashes(&image);
 
     println!("");
     let pe_sz = image.get_buffer().as_ref().len();
@@ -68,14 +69,16 @@ pub fn display_info(pe_filepath: &str) {
     let naive = NaiveDateTime::from_timestamp_opt(timestamp.into(), 0).unwrap();
     let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
     println!(
-        "Compile Time:\t{} (Timestamp: {})",
+        "Compile Time:\t{} (Timestamp: {} ({:#x}))",
         datetime.format("%Y-%m-%d %H:%M:%S"),
+        timestamp as i64,
         timestamp as i64
     );
     let Ok(entrypoint) = image.get_entrypoint() else {
         println!("{}", "Invalid NT headers".red().bold());
         return;
     };
+
     let ep_section = match get_section_name_from_offset(entrypoint.0 as u64, &image) {
         Some(s) => s,
         None => String::from("Not in a section"),
@@ -85,6 +88,14 @@ pub fn display_info(pe_filepath: &str) {
         get_subsystem(&image).unwrap().as_string()
     );
     println!("Entrypoint:     {:#x} => {}\n", entrypoint.0, ep_section);
+    println!(
+        "Code at entrypoint:\n{}",
+        "=".repeat(if true { 80 } else { 0 })
+    );
+    how_to_disassemble(
+        image.get_buffer().as_ref(),
+        entrypoint.as_offset(&image).unwrap().0 as usize,
+    );
     println!("");
     println!("Signature:\n{}", "=".repeat(if true { 80 } else { 0 }));
 
