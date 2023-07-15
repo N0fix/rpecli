@@ -1,124 +1,69 @@
+use clap::{Parser, Subcommand};
 use colored::Colorize;
 use exe::pe::{VecPE, PE};
 use exe::types::CCharString;
 use exe::{Buffer, SectionCharacteristics};
-extern crate argparse;
-use argparse::{ArgumentParser, Store};
 mod commands;
 mod disassembler;
 mod format;
 mod import_export;
 mod util;
 mod utils;
-use crate::commands::import_export::display_import_export;
+use crate::commands::import_export::{display_exports, display_import_export, display_imports};
 use crate::commands::info::display_info;
 use crate::commands::resource::display_ressource;
 use crate::commands::sig::display_signature;
-use crate::import_export::{display_exports, display_imports};
-use crate::utils::pe_size::get_pe_size;
-use crate::utils::rich::display_rich;
-use crate::utils::sections::display_sections;
-use crate::utils::sig::display_sig;
-// https://github.com/clap-rs/clap/blob/master/examples/derive_ref/hand_subcommand.rs
-use clap::error::{Error, ErrorKind};
-use clap::{ArgMatches, Args as _, Command, FromArgMatches, Parser, Subcommand};
+
+#[derive(Subcommand, Debug)]
+enum SubCommand {
+    /// Print all available information
+    Info(PEArgs),
+    /// Print both import and exports
+    ImportExport(PEArgs),
+    /// Print imports
+    Import(PEArgs),
+    /// Print exports
+    Export(PEArgs),
+    /// Print resources
+    Rsrc(PEArgs),
+    /// Print authenticode signature
+    Sig(PEArgs),
+}
+
+#[derive(Parser, Debug)]
+#[clap(author = "Author Name", version, about)]
+/// A Very simple Package Hunter
+struct Arguments {
+    /// Do not compute hash of PE file. (This should greatly improve performance)
+    #[clap(short, long)]
+    no_hash: bool,
+    #[clap(subcommand)]
+    cmd: SubCommand,
+}
 
 #[derive(Parser, Debug)]
 struct PEArgs {
     pe: String,
 }
 
-#[derive(Debug)]
-enum CliSub {
-    Info(PEArgs),
-    ImportExport(PEArgs),
-    Rsrc(PEArgs),
-    Sig(PEArgs),
-}
-
-impl FromArgMatches for CliSub {
-    fn from_arg_matches(matches: &ArgMatches) -> Result<Self, Error> {
-        match matches.subcommand() {
-            Some(("info", args)) => Ok(Self::Info(PEArgs::from_arg_matches(args)?)),
-            Some(("import_export", args)) => {
-                Ok(Self::ImportExport(PEArgs::from_arg_matches(args)?))
-            }
-            Some(("rsrc", args)) => Ok(Self::Rsrc(PEArgs::from_arg_matches(args)?)),
-            Some(("sig", args)) => Ok(Self::Sig(PEArgs::from_arg_matches(args)?)),
-            Some((_, _)) => Err(Error::raw(
-                ErrorKind::InvalidSubcommand,
-                "Valid subcommands are `info` `import_export` `rsrc` `sig` ",
-            )),
-            None => Err(Error::raw(
-                ErrorKind::MissingSubcommand,
-                "Valid subcommands are `info` `import_export` `rsrc` `sig` ",
-            )),
-        }
-    }
-    fn update_from_arg_matches(&mut self, matches: &ArgMatches) -> Result<(), Error> {
-        match matches.subcommand() {
-            Some(("info", args)) => *self = Self::Info(PEArgs::from_arg_matches(args)?),
-            Some(("import_export", args)) => {
-                *self = Self::ImportExport(PEArgs::from_arg_matches(args)?)
-            }
-            Some(("rsrc", args)) => *self = Self::Rsrc(PEArgs::from_arg_matches(args)?),
-            Some(("sig", args)) => *self = Self::Rsrc(PEArgs::from_arg_matches(args)?),
-            Some((_, _)) => {
-                return Err(Error::raw(
-                    ErrorKind::InvalidSubcommand,
-                    "Valid subcommands are `info` `import_export` `rsrc` `sig`",
-                ))
-            }
-            None => (),
-        };
-        Ok(())
-    }
-}
-
-impl Subcommand for CliSub {
-    fn augment_subcommands(cmd: Command) -> Command {
-        cmd.subcommand(PEArgs::augment_args(Command::new("info")))
-            .subcommand(PEArgs::augment_args(Command::new("import_export")))
-            .subcommand(PEArgs::augment_args(Command::new("rsrc")))
-            .subcommand(PEArgs::augment_args(Command::new("sig")))
-            .subcommand_required(true)
-    }
-    fn augment_subcommands_for_update(cmd: Command) -> Command {
-        cmd.subcommand(PEArgs::augment_args(Command::new("info")))
-            .subcommand(PEArgs::augment_args(Command::new("import_export")))
-            .subcommand(PEArgs::augment_args(Command::new("rsrc")))
-            .subcommand(PEArgs::augment_args(Command::new("sig")))
-            .subcommand_required(true)
-    }
-    fn has_subcommand(name: &str) -> bool {
-        matches!(name, "info" | "import_export | rsrc | sig")
-    }
-}
-
-#[derive(Parser, Debug)]
-struct Cli {
-    #[arg(short, long)]
-    no_hashes: bool,
-    #[command(subcommand)]
-    subcommand: CliSub,
-}
-
 fn main() {
-    let args = Cli::parse();
-    let hashes = if args.no_hashes { false } else { true };
+    // let args = Cli::parse();
+    let args = Arguments::parse();
     println!("{args:#?}");
-    match args.subcommand {
-        CliSub::Info(args) => {
-            display_info(&args.pe);
+    match args.cmd {
+        SubCommand::Info(subcommand_args) => {
+            display_info(&subcommand_args.pe, !args.no_hash);
         }
-        CliSub::ImportExport(args) => {
-            display_import_export(&args.pe);
+        SubCommand::ImportExport(subcommand_args) => {
+            display_import_export(&subcommand_args.pe);
         }
-        CliSub::Rsrc(args) => {
-            display_ressource(&args.pe, hashes);
+        SubCommand::Rsrc(subcommand_args) => {
+            display_ressource(&subcommand_args.pe, !args.no_hash);
         }
-        CliSub::Sig(args) => {
-            display_signature(&args.pe);
+        SubCommand::Sig(subcommand_args) => {
+            display_signature(&subcommand_args.pe);
         }
-    };
+        SubCommand::Import(subcommand_args) => display_imports(&subcommand_args.pe),
+        SubCommand::Export(subcommand_args) => display_exports(&subcommand_args.pe),
+    }
 }

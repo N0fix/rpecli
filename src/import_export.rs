@@ -1,3 +1,4 @@
+use crate::utils::timestamps::format_timestamp;
 use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use colored::Colorize;
@@ -64,8 +65,8 @@ pub fn display_imports(pe: &VecPE) -> Result<(), exe::Error> {
 pub fn get_export_map_test<'data, P: PE>(
     s: &ImageExportDirectory,
     pe: &'data P,
-) -> Result<Vec<(u16, &'data str)>, Box<dyn Error>> {
-    let mut result: Vec<(u16, &'data str)> = vec![];
+) -> Result<Vec<(u16, &'data str, ThunkData)>, Box<dyn Error>> {
+    let mut result: Vec<(u16, &'data str, ThunkData)> = vec![];
 
     let directory = pe.get_data_directory(ImageDirectoryEntry::Export)?;
     let start = directory.virtual_address.clone();
@@ -92,13 +93,11 @@ pub fn get_export_map_test<'data, P: PE>(
 
         let ordinal = ordinals[index as usize];
         let function = functions[ordinal as usize].parse_export(start, end);
-        // dbg!(function);
-
         let name_str = match name.as_str() {
             Ok(s) => s,
             Err(_) => continue,
         };
-        result.push((ordinal + 1, name_str));
+        result.push((ordinal + 1, name_str, function));
     }
     // could also color API depending of usage w/ https://github.com/vadimkotov/winapi-json
     result.sort_by(|a, b| a.0.cmp(&b.0));
@@ -127,44 +126,25 @@ pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
         return Ok(());
     };
     println!("{} exported function(s)", exports.len());
-    // let export_string: String = exports
-    //     .iter()
-    //     .map(|(_, s)| {
-    //         if *s != "DllRegisterServer" {
-    //             String::from(s.to_owned())
-    //         } else {
-    //             String::from("")
-    //         }
-    //     })
-    //     .collect();
-    // let exports_ngram = NgramBuilder::new(export_string.as_str()).finish();
-    // let exports_ngram_vec: Vec<usize> = exports_ngram.grams.iter().map(|(x, y)| *y).collect();
-    // let avg: f32 = exports_ngram_vec.iter().sum::<usize>() as f32 / exports_ngram_vec.len() as f32;
-    // println!("avg {}", avg);
-    // exports_ngram_vec.sort_by(|a, b| b.1.cmp(a.1));
-    // let weird_exports: bool = exports.len() >= 2 && exports_ngram_vec.first().unwrap().1 < &3;
-    let weird_exports: bool = false; //avg < 1.30;
-    for (ordinal, export) in &exports {
+
+    for (ordinal, export, thunk) in &exports {
         println!(
-            "\t {:>2} {}",
+            "\t {:>2} {} {}",
             ordinal,
-            warn_format_if!(format!("{}", export), weird_exports)
+            format!("{}", export),
+            match thunk {
+                ThunkData::ForwarderString(_) => warn_format!("(Forwarded export)"),
+                _ => "".normal(),
+            }
         );
     }
 
-    if weird_exports {
-        println!("\n{}", "Weird looking exports".yellow());
-    }
-
     println!("\nexphash: {}", hex::encode(calculate_exphash(pe).unwrap()));
-    let naive = NaiveDateTime::from_timestamp_opt(export_table.time_date_stamp.into(), 0).unwrap();
-    let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
     println!(
-        "Export timestamp: {} (Timestamp: {} ({:#x}))",
-        datetime.format("%Y-%m-%d %H:%M:%S"),
-        export_table.time_date_stamp as i64,
-        export_table.time_date_stamp as i64,
+        "Export timestamp: {}",
+        format_timestamp(export_table.time_date_stamp as i64)
     );
+
     Ok(())
 }
 

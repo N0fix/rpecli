@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::utils::rich_utils::{ObjectKind, RichIter, RichRecord, RichStructure};
+use crate::utils::rich_headers::rich_utils::{ObjectKind, RichIter, RichRecord, RichStructure};
 use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 use bytemuck::cast_slice;
 use colored::Colorize;

@@ -76,12 +76,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "argparse"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f8ebf5827e4ac4fd5946560e6a99776ea73b596d80898f357007317a7141e47"
-
-[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -852,7 +846,6 @@ checksum = "436b050e76ed2903236f032a59761c1eb99e1b0aead2c257922771dab1fc8c78"
 name = "rpecli"
 version = "0.1.0"
 dependencies = [
- "argparse",
  "authenticode",
  "bitflags 2.3.3",
  "bytemuck",

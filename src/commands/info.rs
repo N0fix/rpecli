@@ -9,9 +9,10 @@ use crate::utils::rich::display_rich;
 use crate::utils::rsrc::display_rsrc;
 use crate::utils::sections::{display_sections, get_section_name_from_offset};
 use crate::utils::sig::display_sig;
+use crate::utils::timestamps::format_timestamp;
 use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 
-use crate::utils::hash::display_hashes;
+use crate::utils::hash;
 use crate::utils::tls::display_tls;
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use human_bytes::human_bytes;
@@ -27,13 +28,15 @@ fn get_type(pe: &VecPE) -> &str {
     }
 }
 
-pub fn display_info(pe_filepath: &str) {
+pub fn display_info(pe_filepath: &str, display_hashes: bool) {
     let Ok(image) = VecPE::from_disk_file(pe_filepath) else {
         println!("{}", alert_format!(format!("Could not read {}", pe_filepath)));
         return;
     };
     println!("Metadata:\n{}", "=".repeat(if true { 80 } else { 0 }));
-    display_hashes(&image);
+    if (display_hashes) {
+        hash::display_hashes(&image);
+    }
 
     println!("");
     let pe_sz = image.get_buffer().as_ref().len();
@@ -66,14 +69,7 @@ pub fn display_info(pe_filepath: &str) {
         }
     };
 
-    let naive = NaiveDateTime::from_timestamp_opt(timestamp.into(), 0).unwrap();
-    let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-    println!(
-        "Compile Time:\t{} (Timestamp: {} ({:#x}))",
-        datetime.format("%Y-%m-%d %H:%M:%S"),
-        timestamp as i64,
-        timestamp as i64
-    );
+    println!("Compile Time:\t{}", format_timestamp(timestamp as i64));
     let Ok(entrypoint) = image.get_entrypoint() else {
         println!("{}", "Invalid NT headers".red().bold());
         return;
@@ -123,7 +119,7 @@ pub fn display_info(pe_filepath: &str) {
 
     println!("");
     println!("Resources:\n{}", "=".repeat(if true { 80 } else { 0 }));
-    display_rsrc(&image, true);
+    display_rsrc(&image, display_hashes);
 
     println!("");
     println!("TLS callbacks:\n{}", "=".repeat(if true { 80 } else { 0 }));

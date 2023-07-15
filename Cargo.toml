@@ -10,7 +10,6 @@ readme = "README.md"
 description = "Rust cli tool to parse PE files"
 
 [dependencies]
-argparse = "0.2.2"
 authenticode = "0.2.0"
 bytemuck = "1.13.1"
 chrono = "0.4.26"
