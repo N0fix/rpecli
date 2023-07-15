@@ -248,3 +248,9 @@ cargo install --path .
 - Error handling
 - Possiblity to dump resources
 - Feature to handle comparing some fields between multiple binaries to help finding header similarities
+
+## Internals
+
+When creating this tool, speed and modularity was key considerations. It aims at providing interfaces that allow users to modify the PE parsing backend according to their needs. The default backend is the `exe` crate, specifically designed for parsing PE malwares.
+
+Please note that the traits allowing backend customization are not yet available.
