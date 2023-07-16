@@ -1,6 +1,6 @@
 # RPECLI
 
-Rust blazing fast alternative to [pecli](https://github.com/Te-k/pecli). `pecli` is a great tool, but it uses pefile, which is a bit slow to load PE executables, especialy when dealing with a whole lot of executables. This project aims at being a faster alternative to pecli.
+Rust blazing fast cross-platform alternative to [pecli](https://github.com/Te-k/pecli). `pecli` is a great tool, but it uses pefile, which is a bit slow to load PE executables, especialy when dealing with a whole lot of executables.
 
 This project currently relies on the [`exe`](https://crates.io/crates/exe) create, that was created with malware parsing in mind.
 
@@ -27,52 +27,65 @@ Options:
 ```
 
 ```
-.\rpecli AcXtrnal.dll
+.\rpecli kernel32.dll
 
 Metadata:
 ================================================================================
-MD5       : b5a919d087781aae652058362e6e44df
-SHA1      : 4418bb0218edb25bddea234bec5ead0d02025cd7
-SHA256    : 0a6339ed614079868ae9984bd688bfa9f0c8a585a8af7dcfe1866954cd780475
+MD5       : e44c6872f7e2dade42e472b2c062c7b0
+SHA1      : cc2fcdf6b747943c196d49f7ed55d308d7ef4d9b
+SHA256    : 03bf2226a8cf553fd2a0f22a9f27c3f0f0ec3e99aa061f7219821caa4142c175
 
-Size:           36 KiB (36864 bytes)
+Size:           772.1 KiB (790616 bytes)
 Type:           X64 DLL
-Compile Time:   2026-05-28 17:06:18 (Timestamp: 1779987978 (0x6a18760a))
+Compile Time:   2066-08-28 19:59:40 (Timestamp: 3050251180 (0xb5cf23ac))
 Subsystem:      WindowsCUI
-Entrypoint:     0x12b0 => .text
+Entrypoint:     0x15640 => .text
 
 Code at entrypoint:
 ================================================================================
 48895C2408           mov [rsp+8],rbx
-4889742410           mov [rsp+10h],rsi
 57                   push rdi
 4883EC20             sub rsp,20h
-498BF8               mov rdi,r8
-8BDA                 mov ebx,edx
-488BF1               mov rsi,rcx
-83FA01               cmp edx,1
-7505                 jne short 0000000000000021h
-E883050000           call 00000000000005A4h
+8BFA                 mov edi,edx
+488BD9               mov rbx,rcx
+BA01000000           mov edx,1
+3BFA                 cmp edi,edx
+7505                 jne short 000000000000001Dh
+E817D80000           call 000000000000D834h
+8BD7                 mov edx,edi
 
 Signature:
 ================================================================================
-PE file is not signed
+Signature 0:
+  Signature digest: 852fb691ec19bd403547973f1a963fc17fee2376c25a2590427de1705bc8cfec
+
+  Signer:
+    Issuer:        C=US,STATEORPROVINCENAME=Washington,L=Redmond,O=Microsoft Corporation,CN=Microsoft Windows Production PCA 2011
+    Serial number: 33:00:00:04:0C:12:00:67:8B:16:B2:65:DB:00:00:00:00:04:0C
+  Certificate 0:
+    Issuer:        C=US,STATEORPROVINCENAME=Washington,L=Redmond,O=Microsoft Corporation,CN=Microsoft Windows Production PCA 2011
+    Subject:       C=US,STATEORPROVINCENAME=Washington,L=Redmond,O=Microsoft Corporation,CN=Microsoft Windows
+    Serial number: 33:00:00:04:0C:12:00:67:8B:16:B2:65:DB:00:00:00:00:04:0C
+  Certificate 1:
+    Issuer:        C=US,STATEORPROVINCENAME=Washington,L=Redmond,O=Microsoft Corporation,CN=Microsoft Root Certificate Authority 2010
+    Subject:       C=US,STATEORPROVINCENAME=Washington,L=Redmond,O=Microsoft Corporation,CN=Microsoft Windows Production PCA 2011
+    Serial number: 61:07:76:56:00:00:00:00:00:08
+
 
 
 Rich headers:
 ================================================================================
 
-  Product Name      Build   Product ID   Count   Guessed Visual Studio version
-  Implib900         30729   147          2       Visual Studio 2008 09.00
-  Utc1900_CPP       29395   261          2       Visual Studio 2015 14.00
-  Utc1900_C         29395   260          12      Visual Studio 2015 14.00
-  Masm1400          29395   259          3       Visual Studio 2015 14.00
-  Implib1400        29395   257          9       Visual Studio 2015 14.00
-  Import0           0       1            123     Visual Studio
-  Export1400        29395   256          1       Visual Studio 2015 14.00
-  Utc1900_LTCG_C    29395   264          9       Visual Studio 2017 14.01+
-  Cvtres1400        29395   255          1       Visual Studio 2015 14.00
-  Linker1400        29395   258          1       Visual Studio 2015 14.00
+  Product Name       Build   Product ID   Count   Guessed Visual Studio version
+  Implib1400         29395   257          4       Visual Studio 2015 14.00
+  Implib900          30729   147          201     Visual Studio 2008 09.00
+  Import0            0       1            1332    Visual Studio
+  Utc1900_C          29395   260          10      Visual Studio 2015 14.00
+  Export1400         29395   256          1       Visual Studio 2015 14.00
+  Masm1400           29395   259          5       Visual Studio 2015 14.00
+  Utc1900_POGO_O_C   29395   269          207     UNKN
+  Cvtres1400         29395   255          1       Visual Studio 2015 14.00
+  Linker1400         29395   258          1       Visual Studio 2015 14.00
 
 
 
@@ -80,137 +93,71 @@ Sections:
 ================================================================================
 
     Name    VirtAddr   VirtSize   RawAddr   RawSize   Entropy                  md5                                         Characteristics
-  .text       0x1000     0x1a59    0x1000    0x2000      5.23    f1012214f818509b5ffb52d85f8f7a73   60000020 (CNT_CODE | MEM_EXECUTE | MEM_READ)
-  .rdata      0x3000     0x124e    0x3000    0x2000      2.99    3021728546e74dd5ebe73962c3100b0a   40000040 (CNT_INITIALIZED_DATA | MEM_READ)
-  .data       0x5000      0x780    0x5000    0x1000      0.13    9b1a49ef1aae34f4cb7ae70537b38d0f   C0000040 (CNT_INITIALIZED_DATA | MEM_READ | MEM_WRITE)
-  .pdata      0x6000      0x1a4    0x6000    0x1000      0.57    6267372c124e5255059bff73416a072a   40000040 (CNT_INITIALIZED_DATA | MEM_READ)
-  .rsrc       0x7000      0x408    0x7000    0x1000      1.10    6b3fa71c38edf3c403b297b77f8a4886   40000040 (CNT_INITIALIZED_DATA | MEM_READ)
-  .reloc      0x8000       0x38    0x8000    0x1000      0.13    9a436d4b3782f8b0393438a2693060a2   42000040 (CNT_INITIALIZED_DATA | MEM_DISCARDABLE | MEM_READ)
-
-
+  .text       0x1000    0x7de27    0x1000   0x7e000      6.39    e64217696a3b17b4d623e585246a0d66   60000020 (CNT_CODE | MEM_EXECUTE | MEM_READ)
+  .rdata     0x7f000    0x337b4   0x7f000   0x34000      5.62    78058c4b075118a4e2f44f428859761a   40000040 (CNT_INITIALIZED_DATA | MEM_READ)
+  .data      0xb3000     0x12e4   0xb3000    0x1000      1.17    55b8682f534b352b31d73ad57bbcef5d   C0000040 (CNT_INITIALIZED_DATA | MEM_READ | MEM_WRITE)
+  .pdata     0xb5000     0x5544   0xb4000    0x6000      5.43    91c69814336303f6adff1de3999a993f   40000040 (CNT_INITIALIZED_DATA | MEM_READ)
+  .didat     0xbb000       0xa8   0xba000    0x1000      0.23    302f288de68cff124618438bb2d632cf   C0000040 (CNT_INITIALIZED_DATA | MEM_READ | MEM_WRITE)
+  .rsrc      0xbc000      0x520   0xbb000    0x1000      1.32    d58796bd5bf9664ed21be9166aab39fd   40000040 (CNT_INITIALIZED_DATA | MEM_READ)
+  .reloc     0xbd000      0x348   0xbc000    0x1000      1.74    82affef2f6f4f8f22ad4f220b1b7a7c6   42000040 (CNT_INITIALIZED_DATA | MEM_DISCARDABLE | MEM_READ)
 
 
 Imports:
 ================================================================================
 
-apphelp.dll
-        SE_ShimDPF
-        SE_GetShimId
+api-ms-win-core-rtlsupport-l1-1-0.dll
+        RtlCompareMemory
+        RtlDeleteFunctionTable
+[SNIP]
 
-msvcrt.dll
-        _initterm
-        malloc
-        free
-        _amsg_exit
-        _XcptFilter
-        memset
-        __C_specific_handler
-        _wcsicmp
-        memcpy
+api-ms-win-core-appcompat-l1-1-1.dll
+        BaseReadAppCompatDataForProcess
+        BaseFreeAppCompatDataForProcess
 
-ntdll.dll
-        RtlVirtualUnwind
-        RtlLookupFunctionEntry
-        RtlCaptureContext
-        RtlInitializeCriticalSection
-        RtlLeaveCriticalSection
-        RtlEnterCriticalSection
-        LdrUnlockLoaderLock
-        LdrFindEntryForAddress
-        LdrLockLoaderLock
-        NtQueryInformationThread
-        RtlAllocateHeap
-
-kernel32.dll
-        TerminateProcess
-        CreateEventW
-        Sleep
-        SetEvent
-        Thread32Next
-        CloseHandle
-        QueueUserAPC
-        OpenThread
-        GetCurrentThreadId
-        Thread32First
-        GetCurrentProcessId
-        CreateToolhelp32Snapshot
-        GetModuleHandleW
-        WaitForSingleObject
-        UnhandledExceptionFilter
-        SetUnhandledExceptionFilter
-        GetTickCount
-        GetSystemTimeAsFileTime
-        QueryPerformanceCounter
-        GetCurrentProcess
-
-api-ms-win-eventing-provider-l1-1-0.dll
-        EventWriteTransfer
-
-imphash: 1062d7530750e6553052fe265d51f3f3
+imphash: 5529a33510d7fd9c2cfa748e0d102653
 
 Exports:
 ================================================================================
 
-"AcXtrnal.dll" => 2 exported function(s)
-          1 GetHookAPIs
-          2 NotifyShims 
+"KERNEL32.dll" => 1657 exported function(s)
+          1 AcquireSRWLockExclusive (Forwarded export)
+[SNIP]
+         1657 uaw_wcsrchr
 
-exphash: 53ca8c9718c7d2697bcf11c01c7f3116
-Export timestamp: 2026-05-28 17:06:18 (Timestamp: 1779987978 (0x6a18760a))
+exphash: 4ca79cdc84d990b7803d389563eba24a
+Export timestamp: 2066-08-28 19:59:40 (Timestamp: 3050251180 (0xb5cf23ac))
 
 Debug info:
 ================================================================================
-Entry 0:
+Entry 1:
   Type      : Codeview
-  Timestamp : 2026-05-28 17:06:18 (Timestamp: 1779987978 (0x6a18760a))
+  Timestamp : 2066-08-28 19:59:40 (Timestamp: 3050251180 (0xb5cf23ac))
 
   CodeView (v70)
-    Signature      : {39C0C7D0-4750-A208-7B86-2186555012A3}
+    Signature      : {12950B30-DA44-7427-C06E-E816EFA3EBC6}
     Age            : 1
-    PDB filename   : "AcXtrnal.pdb"
-
-Entry 1:
-  Type      : Pogo
-  Timestamp : 2026-05-28 17:06:18 (Timestamp: 1779987978 (0x6a18760a))
-
-  PGO:
-    0x001000 ".text$mn" (size : 0x16d0)
-    0x0026d0 ".text$mn$00" (size : 0x40)
-    0x002710 ".text$x" (size : 0x349)
-    0x003000 ".rdata$brc" (size : 0x148)
-    0x003148 ".idata$5" (size : 0x180)
-    0x0032c8 ".00cfg" (size : 0x28)
-    0x0032f0 ".CRT$XCA" (size : 0x8)
-    0x0032f8 ".CRT$XCZ" (size : 0x8)
-    0x003300 ".CRT$XIA" (size : 0x8)
-    0x003308 ".CRT$XIAA" (size : 0x8)
-    0x003310 ".CRT$XIZ" (size : 0x8)
-    0x003318 ".gehcont" (size : 0x30)
-    0x003348 ".gfids" (size : 0x38)
-    0x003380 ".rdata" (size : 0x488)
-    0x003808 ".rdata$zzzdbg" (size : 0x250)
-    0x003a58 ".xdata" (size : 0x208)
-    0x003c60 ".edata" (size : 0x64)
-    0x003cc4 ".idata$2" (size : 0x64)
-    0x003d28 ".idata$3" (size : 0x18)
-    0x003d40 ".idata$4" (size : 0x180)
-    0x003ec0 ".idata$6" (size : 0x38e)
-    0x005000 ".data$brc" (size : 0x50)
-    0x005050 ".data" (size : 0x30)
-    0x005080 ".bss" (size : 0x700)
-    0x006000 ".pdata" (size : 0x1a4)
-    0x007000 ".rsrc$01" (size : 0x60)
-    0x007060 ".rsrc$02" (size : 0x3a8)
+    PDB filename   : "kernel32.pdb"
 
 Entry 2:
+  Type      : Pogo
+  Timestamp : 2066-08-28 19:59:40 (Timestamp: 3050251180 (0xb5cf23ac))
+
+  PGO:
+    0x001000 ".text$lp00kernel32.dll!20_pri7" (size : 0xb10)
+    0x001b10 ".text$lp01kernel32.dll!20_pri7" (size : 0x1f040)
+[SNIP]
+    0x0bc000 ".rsrc$01" (size : 0xb0)
+    0x0bc0b0 ".rsrc$02" (size : 0x470)
+
+Entry 3:
   Type      : Repro
-  Timestamp : 2026-05-28 17:06:18 (Timestamp: 1779987978 (0x6a18760a))
+  Timestamp : 2066-08-28 19:59:40 (Timestamp: 3050251180 (0xb5cf23ac))
 
   Entry of type Repro is not supported for display
 
-Entry 3:
+Entry 4:
   Type      : ExDllCharacteristics
-  Timestamp : 2026-05-28 17:06:18 (Timestamp: 1779987978 (0x6a18760a))
+  Timestamp : 2066-08-28 19:59:40 (Timestamp: 3050251180 (0xb5cf23ac))
 
   Entry of type ExDllCharacteristics is not supported for display
 
@@ -220,7 +167,9 @@ Resources:
 
     Name     Offset   RSRC ID    Lang ID                   MD5
 
-  Version      48      ID(1)     ID(1033)    0ea64388fb73ef52be989c95368b971e
+    MUI        80      ID(1)     ID(1033)    fbaf48ec981a5eecdb57b929fdd426e8
+
+  Version      90      ID(1)     ID(1033)    3a1682660ad485730c4987c23ab5fdd7
 
 
 
@@ -254,3 +203,10 @@ cargo install --path .
 When creating this tool, speed and modularity was key considerations. It aims at providing interfaces that allow users to modify the PE parsing backend according to their needs. The default backend is the `exe` crate, specifically designed for parsing PE malwares.
 
 Please note that the traits allowing backend customization are not yet available.
+
+
+## Thanks
+This project uses code from the following projects :
+- [authenticode](https://crates.io/crates/authenticode)
+- [pelite](https://crates.io/crates/pelite)
+- [exe](https://crates.io/crates/exe)

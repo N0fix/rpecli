@@ -31,10 +31,9 @@ enum SubCommand {
 }
 
 #[derive(Parser, Debug)]
-#[clap(author = "Author Name", version, about)]
-/// A Very simple Package Hunter
+#[clap(version)]
 struct Arguments {
-    /// Do not compute hash of PE file. (This should greatly improve performance)
+    /// Do not compute any hashes when reading PE file. (Enabling this option should greatly improve performance)
     #[clap(short, long)]
     no_hash: bool,
     #[clap(subcommand)]

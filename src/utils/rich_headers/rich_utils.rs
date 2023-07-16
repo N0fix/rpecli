@@ -1,3 +1,5 @@
+/// This file is modified from https://docs.rs/pelite/latest/src/pelite/rich_structure.rs.html#179-183
+
 // References:
 //
 // * https://github.com/dishather/richprint

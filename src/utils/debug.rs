@@ -154,7 +154,7 @@ pub fn display_debug_info(pe: &VecPE) {
         Ok(entries) => {
             // println!("{} debug entries", entries.entries.len());
             for (i, entry) in entries.entries.iter().enumerate() {
-                println!("{}", format!("Entry {}:\n{}", i, entry).bold());
+                println!("{}", format!("Entry {}:\n{}", i + 1, entry).bold());
                 match entry.parse(pe) {
                     Ok(debug_entry) => match debug_entry {
                         DebugEntryEnum::Codeview(cv) => {
