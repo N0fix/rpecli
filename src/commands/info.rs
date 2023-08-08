@@ -1,7 +1,7 @@
 use colored::Colorize;
 use exe::{Address, FileCharacteristics, VecPE, PE};
 
-use crate::disassembler::disass::how_to_disassemble;
+use crate::disassembler::disass::disassemble_bytes;
 use crate::import_export::{display_exports, display_imports};
 use crate::util::get_subsystem;
 use crate::utils::debug::display_debug_info;
@@ -88,9 +88,10 @@ pub fn display_info(pe_filepath: &str, display_hashes: bool) {
         "Code at entrypoint:\n{}",
         "=".repeat(if true { 80 } else { 0 })
     );
-    how_to_disassemble(
+    disassemble_bytes(
         image.get_buffer().as_ref(),
         entrypoint.as_offset(&image).unwrap().0 as usize,
+        10
     );
     println!("");
     println!("Signature:\n{}", "=".repeat(if true { 80 } else { 0 }));

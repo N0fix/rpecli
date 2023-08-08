@@ -1,4 +1,6 @@
+use std::fs;
 use std::io::Write;
+use human_bytes::human_bytes;
 
 use colored::Colorize;
 use exe::pe::PE;
@@ -6,7 +8,7 @@ use exe::types::{CCharString, ImportData, ImportDirectory};
 use exe::ResolvedDirectoryData::{Data, Directory};
 use exe::{
     Address, Buffer, ImageDirectoryEntry, PETranslation, ResolvedDirectoryID, ResourceDirectoryMut,
-    RVA,
+    RVA, FlattenedResourceDataEntry,
 };
 use exe::{
     ImageResourceDataEntry, ImageResourceDirStringU, ImageResourceDirectoryEntry,
@@ -19,10 +21,10 @@ use term_table::Table;
 
 use crate::util::safe_read;
 
-pub fn ResolvedDirectoryID_to_string(id: ResolvedDirectoryID) -> String {
+pub fn ResolvedDirectoryID_to_string(id: &ResolvedDirectoryID) -> String {
     match id {
-        ResolvedDirectoryID::ID(id) => return resource_id_to_type(ResourceID::from_u32(id)),
-        ResolvedDirectoryID::Name(id) => return id,
+        ResolvedDirectoryID::ID(id) => return resource_id_to_type(ResourceID::from_u32(*id)),
+        ResolvedDirectoryID::Name(id) => return id.to_string(),
     }
 }
 
@@ -54,6 +56,16 @@ pub fn resource_id_to_type(id: ResourceID) -> String {
         ResourceID::Manifest => "Manifest".to_owned(),
         ResourceID::Unknown => "Unknown".to_owned(),
     };
+}
+
+pub fn format_entry_to_string(entry: &FlattenedResourceDataEntry) -> String {
+    let entry_type = ResolvedDirectoryID_to_string(&entry.rsrc_id);
+    let lang_id = match &entry.lang_id {
+        ResolvedDirectoryID::ID(id) => id.to_string(),
+        ResolvedDirectoryID::Name(x) => x.to_owned(),
+    };
+
+    format!("{:06x}-{}-{}", entry.data.0, lang_id, entry_type)
 }
 
 pub fn display_rsrc(pe: &VecPE, display_hashes: bool) {
@@ -118,10 +130,11 @@ pub fn display_rsrc(pe: &VecPE, display_hashes: bool) {
         //         }
         //     }
         // };
-        let resource_directory_name = ResolvedDirectoryID_to_string(entry.type_id);
+        let resource_directory_name = ResolvedDirectoryID_to_string(&entry.type_id);
+        let offset = pe.translate(PETranslation::Memory(data_entry.offset_to_data)).unwrap_or(0xFFFFFFFF);
         let res_data = safe_read(
             pe,
-            data_entry.offset_to_data.0 /*pe.translate(PETranslation::Memory(data_entry.offset_to_data)).unwrap()*/ as usize,
+            offset,
             data_entry.size as usize,
         );
         table.add_row(Row::new(vec![
@@ -168,4 +181,41 @@ pub fn display_rsrc(pe: &VecPE, display_hashes: bool) {
         // }
     }
     println!("{}", table.render());
+}
+
+pub fn dump_rsrc(pe: &VecPE)
+{
+    let rsrc = match ResourceDirectory::parse(pe) {
+        Ok(r) => r,
+        Err(_) => {
+            println!("No resource");
+            return;
+        }
+    };
+    let result_dir = "/tmp/resources/";
+    fs::create_dir_all(result_dir).unwrap();
+    for entry in rsrc.resources {
+        let data_entry = match entry.get_data_entry(pe) {
+            Ok(e) => e,
+            Err(_) => &ImageResourceDataEntry {
+                offset_to_data: RVA(0),
+                size: 0,
+                code_page: 0,
+                reserved: 0,
+            },
+        };
+
+        let resource_directory_name = ResolvedDirectoryID_to_string(&entry.type_id);
+        let offset = pe.translate(PETranslation::Memory(data_entry.offset_to_data)).unwrap_or(0xFFFFFFFF);
+        let res_data = safe_read(
+            pe,
+            offset,
+            data_entry.size as usize,
+        );
+
+        let filename = format_entry_to_string(&entry);
+        let filepath = format!("{}/{}", result_dir, filename);
+        fs::write(&filepath, res_data);
+        println!("Dumped {} bytes ({}) to {} ", res_data.len(), human_bytes(res_data.len() as u32), filepath);
+    }
 }

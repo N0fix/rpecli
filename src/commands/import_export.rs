@@ -31,6 +31,6 @@ pub fn display_exports(pe_filepath: &str) {
         return;
     };
 
-    println!("Imports:\n{}", "=".repeat(if true { 80 } else { 0 }));
+    println!("Exports:\n{}", "=".repeat(if true { 80 } else { 0 }));
     import_export::display_exports(&image);
 }

@@ -180,6 +180,7 @@ impl Display for SectionTable<'_> {
             //     "Characteristics".bold(),
             // );
             let section_hash = format!("{:?}", md5::compute(section.data));
+            let entropy = shannon_entropy(section.data);
             table.add_row(Row::new(vec![
                 TableCell::new_with_alignment(
                     section.name,
@@ -213,7 +214,7 @@ impl Display for SectionTable<'_> {
                     term_table::table_cell::Alignment::Right,
                 ),
                 TableCell::new_with_alignment(
-                    format!("{:6.2}", shannon_entropy(section.data)),
+                    alert_format_if!(format!("{:6.2}", entropy).bold(), entropy > 6.7),
                     1,
                     term_table::table_cell::Alignment::Right,
                 ),

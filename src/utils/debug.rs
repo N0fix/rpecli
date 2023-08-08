@@ -10,7 +10,7 @@ use crate::{
 };
 use colored::Colorize;
 use dataview::Pod;
-use exe::{Buffer, DebugDirectory, ImageDebugDirectory, ImageDirectoryEntry, VecPE, PE};
+use exe::{Buffer, DebugDirectory, ImageDebugDirectory, ImageDirectoryEntry, VecPE, PE, Address};
 
 use super::debug_entries::{codeview::CodeView, pgo::Pgo};
 
@@ -22,6 +22,7 @@ pub enum ReadError {
 #[derive(Debug)]
 pub enum DebugDirectoryParseError {
     MissingDirectory,
+    OOBDirectory
 }
 
 pub trait ReadFrom<'data> {
@@ -135,9 +136,13 @@ impl DebugEntries<'_> {
             return Err(DebugDirectoryParseError::MissingDirectory);
         };
         let directory = pe.get_data_directory(ImageDirectoryEntry::Debug).unwrap();
+        
+        let Ok(offset) = directory.virtual_address.as_offset(pe) else {
+            return Err(DebugDirectoryParseError::OOBDirectory);
+        };
         let imgdbgdir: &[DebugEntry] = pe
             .get_slice_ref(
-                directory.virtual_address.0 as usize,
+                offset.0 as usize,
                 directory.size as usize / std::mem::size_of::<DebugEntry>(),
             )
             .unwrap();
@@ -167,8 +172,8 @@ pub fn display_debug_info(pe: &VecPE) {
                             println!(
                                 "{}",
                                 warn_format!(format!(
-                                    "  Entry of type {:?} is not supported for display\n",
-                                    ImageDebugType::from_u32(entry.type_)
+                                    "  Entry of type {:?} ({}) is not supported for display\n",
+                                    ImageDebugType::from_u32(entry.type_), entry.type_
                                 ))
                             );
                         }
@@ -181,6 +186,9 @@ pub fn display_debug_info(pe: &VecPE) {
             match e {
                 DebugDirectoryParseError::MissingDirectory => {
                     println!("{}", warn_format!("No Debug directory"))
+                },
+                DebugDirectoryParseError::OOBDirectory => {
+                    println!("{}", warn_format!("Debug directory is out of bounds"))
                 }
             };
         }
