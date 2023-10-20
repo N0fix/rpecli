@@ -7,7 +7,7 @@ repository = "https://github.com/N0fix/rpecli"
 authors = ["Nofix"]
 keywords = ["pe", "portable-executable", "rpecli"]
 readme = "README.md"
-description = "Rust cli tool to parse PE files"
+description = "Rust cli tool to display information about PE files"
 
 [dependencies]
 authenticode = "0.2.0"

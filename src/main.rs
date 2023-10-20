@@ -21,7 +21,7 @@ enum SubCommand {
     Import(PEArgs),
     /// Print exports
     Export(PEArgs),
-    /// Print resources
+    /// Print or dump resources
     Rsrc(RsrcArg),
     /// Print authenticode signature
     Sig(PEArgs),

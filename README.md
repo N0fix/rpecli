@@ -1,6 +1,6 @@
 # RPECLI
 
-Rust blazing fast cross-platform alternative to [pecli](https://github.com/Te-k/pecli). `pecli` is a great tool, but it uses pefile, which is a bit slow to load PE executables, especialy when dealing with a whole lot of executables.
+Rust blazing fast cross-platform and hopefully accurate alternative to [pecli](https://github.com/Te-k/pecli). `pecli` is a great tool, but it uses pefile, which is a bit slow to load PE executables, especialy when dealing with a whole lot of executables.
 
 This project currently relies on the [`exe`](https://crates.io/crates/exe) create, that was created with malware parsing in mind.
 
