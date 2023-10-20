@@ -6,12 +6,10 @@ use exe::{
     pe, Address, ImageDataDirectory, VSFixedFileInfo, VSStringFileInfo, VSStringTable,
     VSVersionInfo, VecPE, WCharString, PE, RVA,
 };
-use term_table::row::Row;
-use term_table::table_cell::TableCell;
-use term_table::Table;
-
-use crate::util::safe_read;
-use authenticode::{AttributeCertificateIterator, AuthenticodeSignature, PeOffsets, PeTrait};
+use authenticode::{
+    AttributeCertificateError, AttributeCertificateIterator, AuthenticodeSignature, PeOffsets,
+    PeTrait,
+};
 use cms::signed_data::SignerIdentifier;
 
 struct PEForParsing {
@@ -73,7 +71,10 @@ impl PeTrait for PEForParsing {
             exe::Arch::X64 => mem::size_of::<exe::ImageNTHeaders64>(),
         };
 
-        let Ok(security_dir) = self.pe.get_data_directory(exe::ImageDirectoryEntry::Security) else {
+        let Ok(security_dir) = self
+            .pe
+            .get_data_directory(exe::ImageDirectoryEntry::Security)
+        else {
             return Err(authenticode::PeOffsetError);
         };
         let x: RVA = security_dir.virtual_address;
@@ -103,20 +104,21 @@ struct PeSig {
 }
 
 impl PeSig {
-    pub fn parse_pe(pe: &VecPE) -> PeSig {
+    pub fn parse_pe(pe: &VecPE) -> Result<PeSig, AttributeCertificateError> {
         let mut result = PeSig { signatures: vec![] };
         let security_dir = match pe.get_data_directory(exe::ImageDirectoryEntry::Security) {
             Ok(security_dir) => security_dir,
-            Err(_) => return result,
+            Err(_) => return Ok(result),
         };
         if security_dir.virtual_address.0 == 0 {
-            return result;
+            return Ok(result);
         } else {
             let peparse = PEForParsing { pe: pe.clone() };
 
-            result = match AttributeCertificateIterator::new(&peparse).unwrap() {
+            result = match AttributeCertificateIterator::new(&peparse)? {
                 Some(s) => PeSig {
                     signatures: s
+                        .filter_map(|attr_cert| attr_cert.ok())
                         .map(|attr_cert| attr_cert.get_authenticode_signature())
                         .collect::<Result<Vec<_>, _>>()
                         .unwrap(),
@@ -125,7 +127,7 @@ impl PeSig {
             };
         }
 
-        result
+        Ok(result)
     }
 }
 
@@ -136,7 +138,7 @@ impl Display for PeSig {
         }
 
         for (signature_index, s) in self.signatures.iter().enumerate() {
-            writeln!(f, "Signature {signature_index}:")?;
+            writeln!(f, "Entry {signature_index}:")?;
 
             write!(f, "  Signature digest: ")?;
             for byte in s.digest() {
@@ -167,5 +169,28 @@ impl Display for PeSig {
 }
 
 pub fn display_sig(pe: &VecPE) {
-    println!("{}", PeSig::parse_pe(pe));
+    let sigs = match PeSig::parse_pe(pe) {
+        Ok(sigs) => sigs,
+        Err(e) => match e {
+            AttributeCertificateError::OutOfBounds => {
+                println!(
+                    "{}",
+                    warn_format!("Security directory exists, but is out of bounds")
+                );
+                return;
+            }
+            AttributeCertificateError::InvalidSize => {
+                println!(
+                    "{}",
+                    warn_format!("Security directory exists, but signature has an invalid size")
+                );
+                return;
+            }
+            AttributeCertificateError::InvalidCertificateSize => {
+                println!("{}", warn_format!("Signature has an invalid size"));
+                return;
+            }
+        },
+    };
+    println!("{}", sigs);
 }

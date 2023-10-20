@@ -2,15 +2,17 @@ use bytemuck::cast_slice;
 use chrono::{NaiveDateTime, Utc};
 use core::fmt;
 use pkbuffer::Castable;
+use serde::{Deserialize, Serialize};
 use std::{ffi::CStr, fmt::Display, io::Read, mem, slice};
 // use bytemuck::Pod;
+use crate::alert_format;
 use crate::{
-    alert_format, alert_format_if, color_format_if, utils::timestamps::format_timestamp,
-    warn_format, warn_format_if,
+    alert_format_if, color_format_if, utils::timestamps::format_timestamp, warn_format,
+    warn_format_if,
 };
 use colored::Colorize;
 use dataview::Pod;
-use exe::{Buffer, DebugDirectory, ImageDebugDirectory, ImageDirectoryEntry, VecPE, PE, Address};
+use exe::{Address, Buffer, DebugDirectory, ImageDebugDirectory, ImageDirectoryEntry, VecPE, PE};
 
 use super::debug_entries::{codeview::CodeView, pgo::Pgo};
 
@@ -22,7 +24,7 @@ pub enum ReadError {
 #[derive(Debug)]
 pub enum DebugDirectoryParseError {
     MissingDirectory,
-    OOBDirectory
+    OOBDirectory,
 }
 
 pub trait ReadFrom<'data> {
@@ -86,7 +88,7 @@ impl ImageDebugType {
 
 // wip, should be using POD
 #[repr(C)]
-#[derive(Copy, Clone, Eq, PartialEq, Castable, Debug)]
+#[derive(Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Castable, Debug)]
 pub struct DebugEntry {
     pub characteristics: u32,
     pub time_date_stamp: u32,
@@ -107,7 +109,7 @@ impl Display for DebugEntry {
         )?;
         writeln!(
             f,
-            "  Timestamp : {}",
+            "  Debug timestamp : {}",
             format_timestamp(self.time_date_stamp as i64)
         )
     }
@@ -125,18 +127,19 @@ impl<'pe> DebugEntry {
     }
 }
 
-pub struct DebugEntries<'entries> {
-    pub entries: Vec<&'entries DebugEntry>,
+#[derive(Default, Clone, Serialize, Deserialize)]
+pub struct DebugEntries {
+    pub entries: Vec<DebugEntry>,
 }
 
-impl DebugEntries<'_> {
+impl DebugEntries {
     pub fn parse(pe: &VecPE) -> Result<DebugEntries, DebugDirectoryParseError> {
         let mut result = DebugEntries { entries: vec![] };
         let Ok(debug_directory_check) = DebugDirectory::parse(pe) else {
             return Err(DebugDirectoryParseError::MissingDirectory);
         };
         let directory = pe.get_data_directory(ImageDirectoryEntry::Debug).unwrap();
-        
+
         let Ok(offset) = directory.virtual_address.as_offset(pe) else {
             return Err(DebugDirectoryParseError::OOBDirectory);
         };
@@ -147,7 +150,7 @@ impl DebugEntries<'_> {
             )
             .unwrap();
         for debug_entry in imgdbgdir {
-            result.entries.push(debug_entry);
+            result.entries.push(debug_entry.clone());
         }
 
         Ok(result)
@@ -173,7 +176,8 @@ pub fn display_debug_info(pe: &VecPE) {
                                 "{}",
                                 warn_format!(format!(
                                     "  Entry of type {:?} ({}) is not supported for display\n",
-                                    ImageDebugType::from_u32(entry.type_), entry.type_
+                                    ImageDebugType::from_u32(entry.type_),
+                                    entry.type_
                                 ))
                             );
                         }
@@ -186,7 +190,7 @@ pub fn display_debug_info(pe: &VecPE) {
             match e {
                 DebugDirectoryParseError::MissingDirectory => {
                     println!("{}", warn_format!("No Debug directory"))
-                },
+                }
                 DebugDirectoryParseError::OOBDirectory => {
                     println!("{}", warn_format!("Debug directory is out of bounds"))
                 }

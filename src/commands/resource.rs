@@ -4,19 +4,16 @@ use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_fo
 use colored::Colorize;
 use exe::{FileCharacteristics, VecPE, PE};
 
-pub fn display_ressource(pe_filepath: &str, display_hashes: bool) {
-    let Ok(image) = VecPE::from_disk_file(pe_filepath) else {
-        println!("{}", alert_format!(format!("Could not read {}", pe_filepath)));
-        return;
-    };
-    println!("Resources:\n{}", "=".repeat(if true { 80 } else { 0 }));
-    display_rsrc(&image, display_hashes);
-}
-
-pub fn dump_resources(pe_filepath: &str) {
-    let Ok(image) = VecPE::from_disk_file(pe_filepath) else {
-        println!("{}", alert_format!(format!("Could not read {}", pe_filepath)));
-        return;
-    };
-    dump_rsrc(&image);
+pub fn rsrc_cmd(pe_filepaths: &Vec<String>, display_hashes: bool, dump: bool) {
+    for file in pe_filepaths {
+        let Ok(image) = VecPE::from_disk_file(file) else {
+            println!("{}", alert_format!(format!("Could not read {}", file)));
+            continue;
+        };
+        println!("Resources:\n{}", "=".repeat(if true { 80 } else { 0 }));
+        display_rsrc(&image, display_hashes);
+        if dump {
+            dump_rsrc(&image);
+        }
+    }
 }

@@ -1,14 +1,18 @@
+use colored::Colorize;
+use entropy::shannon_entropy;
+use human_bytes::human_bytes;
+use serde::{Serialize, Deserialize};
 use std::fs;
 use std::io::Write;
-use human_bytes::human_bytes;
-
-use colored::Colorize;
+#[macro_use]
+use crate::{color_format_if, alert_format, warn_format, alert_format_if, warn_format_if};
 use exe::pe::PE;
 use exe::types::{CCharString, ImportData, ImportDirectory};
 use exe::ResolvedDirectoryData::{Data, Directory};
 use exe::{
-    Address, Buffer, ImageDirectoryEntry, PETranslation, ResolvedDirectoryID, ResourceDirectoryMut,
-    RVA, FlattenedResourceDataEntry,
+    Address, Buffer, FlattenedResourceDataEntry, HashData, ImageDirectoryEntry,
+    ImageResourceDirectory, PETranslation, ResolvedDirectoryID, ResourceDirectoryMut, ResourceNode,
+    ResourceOffset, RVA,
 };
 use exe::{
     ImageResourceDataEntry, ImageResourceDirStringU, ImageResourceDirectoryEntry,
@@ -20,6 +24,18 @@ use term_table::table_cell::TableCell;
 use term_table::Table;
 
 use crate::util::safe_read;
+use crate::utils::timestamps::format_timestamp;
+
+#[derive(Serialize, Deserialize, Default, Clone, PartialEq, PartialOrd, Ord, Eq)]
+pub struct ResourceEntry {
+    pub module: String,
+    pub functions: Vec<ImportFunction>,
+}
+
+#[derive(Serialize, Deserialize, Default, Clone, PartialEq, PartialOrd, Ord, Eq)]
+pub struct Resources {
+    pub entries: Vec<ResourceEntry>,
+}
 
 pub fn ResolvedDirectoryID_to_string(id: &ResolvedDirectoryID) -> String {
     match id {
@@ -69,6 +85,11 @@ pub fn format_entry_to_string(entry: &FlattenedResourceDataEntry) -> String {
 }
 
 pub fn display_rsrc(pe: &VecPE, display_hashes: bool) {
+    if !pe.has_data_directory(ImageDirectoryEntry::Resource) {
+        println!("No resource dirctory");
+        return;
+    }
+
     let rsrc = match ResourceDirectory::parse(pe) {
         Ok(r) => r,
         Err(_) => {
@@ -76,6 +97,7 @@ pub fn display_rsrc(pe: &VecPE, display_hashes: bool) {
             return;
         }
     };
+
     let mut table = Table::new();
 
     table.style = term_table::TableStyle::empty();
@@ -98,8 +120,13 @@ pub fn display_rsrc(pe: &VecPE, display_hashes: bool) {
             term_table::table_cell::Alignment::Center,
         ),
         TableCell::new_with_alignment(
+            "Entropy".bold(),
+            1,
+            term_table::table_cell::Alignment::Center,
+        ),
+        TableCell::new_with_alignment(
             if display_hashes {
-                "MD5".bold()
+                "SHA256".bold()
             } else {
                 "".clear()
             },
@@ -108,7 +135,13 @@ pub fn display_rsrc(pe: &VecPE, display_hashes: bool) {
         ),
     ]));
 
-    // println!("{} resource(s)\n", rsrc.root_node.directory.entries());
+    println!("{} resource(s)\n", rsrc.resources.len());
+    let root_node = ResourceNode::parse(pe, ResourceOffset(0 as u32)).unwrap();
+    println!(
+        "Resource timestamp: {}",
+        format_timestamp(root_node.directory.time_date_stamp as i64)
+    );
+
     for entry in rsrc.resources {
         let data_entry = match entry.get_data_entry(pe) {
             Ok(e) => e,
@@ -131,12 +164,11 @@ pub fn display_rsrc(pe: &VecPE, display_hashes: bool) {
         //     }
         // };
         let resource_directory_name = ResolvedDirectoryID_to_string(&entry.type_id);
-        let offset = pe.translate(PETranslation::Memory(data_entry.offset_to_data)).unwrap_or(0xFFFFFFFF);
-        let res_data = safe_read(
-            pe,
-            offset,
-            data_entry.size as usize,
-        );
+        let offset = pe
+            .translate(PETranslation::Memory(data_entry.offset_to_data))
+            .unwrap_or(0xFFFFFFFF);
+        let res_data = safe_read(pe, offset, data_entry.size as usize);
+        let entropy = shannon_entropy(res_data.as_ref());
         table.add_row(Row::new(vec![
             TableCell::new_with_alignment(
                 format!("{}", resource_directory_name),
@@ -159,8 +191,13 @@ pub fn display_rsrc(pe: &VecPE, display_hashes: bool) {
                 term_table::table_cell::Alignment::Center,
             ),
             TableCell::new_with_alignment(
+                alert_format_if!(format!("{:2.2}", entropy).bold(), entropy > 6.7),
+                1,
+                term_table::table_cell::Alignment::Center,
+            ),
+            TableCell::new_with_alignment(
                 if display_hashes {
-                    format!("{:?}", md5::compute(res_data))
+                    format!("{}", sha256::digest(res_data.as_ref()))
                 } else {
                     "".to_string()
                 },
@@ -183,8 +220,7 @@ pub fn display_rsrc(pe: &VecPE, display_hashes: bool) {
     println!("{}", table.render());
 }
 
-pub fn dump_rsrc(pe: &VecPE)
-{
+pub fn dump_rsrc(pe: &VecPE) {
     let rsrc = match ResourceDirectory::parse(pe) {
         Ok(r) => r,
         Err(_) => {
@@ -206,16 +242,19 @@ pub fn dump_rsrc(pe: &VecPE)
         };
 
         let resource_directory_name = ResolvedDirectoryID_to_string(&entry.type_id);
-        let offset = pe.translate(PETranslation::Memory(data_entry.offset_to_data)).unwrap_or(0xFFFFFFFF);
-        let res_data = safe_read(
-            pe,
-            offset,
-            data_entry.size as usize,
-        );
+        let offset = pe
+            .translate(PETranslation::Memory(data_entry.offset_to_data))
+            .unwrap_or(0xFFFFFFFF);
+        let res_data = safe_read(pe, offset, data_entry.size as usize);
 
         let filename = format_entry_to_string(&entry);
         let filepath = format!("{}/{}", result_dir, filename);
         fs::write(&filepath, res_data);
-        println!("Dumped {} bytes ({}) to {} ", res_data.len(), human_bytes(res_data.len() as u32), filepath);
+        println!(
+            "Dumped {} bytes ({}) to {} ",
+            res_data.len(),
+            human_bytes(res_data.len() as u32),
+            filepath
+        );
     }
 }

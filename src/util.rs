@@ -18,14 +18,11 @@ pub fn round_to_pe_sz_with_offset<P: PE>(pe: &P, offset: usize, value: usize) ->
 
 pub fn safe_read<P: PE>(pe: &P, offset: usize, size: usize) -> &[u8] {
     let pe_sz = get_pe_file_size(pe);
-    if offset > pe_sz {
+    if offset >= pe_sz {
         return pe.read(0, 0).unwrap();
     }
 
     let safe_size = round_to_pe_sz_with_offset(pe, offset, size);
-    // if offset + safe_size == pe_sz {
-    // return &[];
-    // }
     pe.read(offset, safe_size).unwrap()
 }
 
