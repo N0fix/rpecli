@@ -1,5 +1,5 @@
 use colored::Colorize;
-use exe::{Address, FileCharacteristics, VecPE, PE};
+use exe::{Address, FileCharacteristics, ImageFileHeader, VecPE, PE};
 
 use crate::disassembler::disass::disassemble_bytes;
 use crate::import_export::{display_exports, display_imports};
@@ -28,9 +28,18 @@ fn get_type(pe: &VecPE) -> &str {
     }
 }
 
-pub fn display_info(pe_filepath: &str, display_hashes: bool) {
+pub fn info_cmd(pe_filepaths: &Vec<String>, display_hashes: bool) {
+    for file in pe_filepaths {
+        display_info(file.as_str(), display_hashes);
+    }
+}
+
+fn display_info(pe_filepath: &str, display_hashes: bool) {
     let Ok(image) = VecPE::from_disk_file(pe_filepath) else {
-        println!("{}", alert_format!(format!("Could not read {}", pe_filepath)));
+        println!(
+            "{}",
+            alert_format!(format!("Could not read {}", pe_filepath))
+        );
         return;
     };
     println!("Metadata:\n{}", "=".repeat(if true { 80 } else { 0 }));
@@ -40,12 +49,12 @@ pub fn display_info(pe_filepath: &str, display_hashes: bool) {
 
     println!("");
     let pe_sz = image.get_buffer().as_ref().len();
+    let Ok(arch) = image.get_arch() else {
+        println!("Invalid NT Header");
+        return;
+    };
     println!("Size:\t\t{} ({} bytes)", human_bytes(pe_sz as u32), pe_sz);
-    println!(
-        "Type:\t\t{:?} {}",
-        image.get_arch().unwrap(),
-        get_type(&image)
-    );
+    println!("Type:\t\t{:?} {}", arch, get_type(&image));
 
     let Ok(arch) = image.get_arch() else {
         println!("{}", alert_format!("Could not read PE arch"));
@@ -91,7 +100,7 @@ pub fn display_info(pe_filepath: &str, display_hashes: bool) {
     disassemble_bytes(
         image.get_buffer().as_ref(),
         entrypoint.as_offset(&image).unwrap().0 as usize,
-        10
+        10,
     );
     println!("");
     println!("Signature:\n{}", "=".repeat(if true { 80 } else { 0 }));

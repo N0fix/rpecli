@@ -4,6 +4,7 @@ use entropy::shannon_entropy;
 use exe::{Buffer, PEType};
 use exe::{CCharString, VecPE, PE};
 use pkbuffer::{Castable, VecBuffer};
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt::{Debug, Display};
 use term_table::row::Row;
@@ -13,12 +14,14 @@ use term_table::Table;
 use crate::{color_format_if, alert_format, warn_format, alert_format_if, warn_format_if};
 use crate::util::{round_to_pe_sz, round_to_pe_sz_with_offset, safe_read};
 
-struct Section<'data> {
+#[derive(Serialize, Deserialize, Default, Clone, PartialEq, PartialOrd)]
+pub struct Section<'data> {
     name: &'data str,
     virt_addr: u32,
     virt_size: u32,
     raw_addr: u32,
     raw_size: u32,
+    #[serde(skip_serializing)]
     data: &'data [u8],
     entropy: Option<f32>,
     characteristics: u32,
@@ -53,7 +56,9 @@ impl Section<'_> {
     }
 }
 
-struct SectionTable<'data> {
+#[derive(Default, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
+pub struct SectionTable<'data> {
+    #[serde(borrow)]
     sections: Vec<Section<'data>>,
 }
 

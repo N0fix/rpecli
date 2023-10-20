@@ -1,11 +1,14 @@
 pub mod debug;
 pub mod debug_entries;
+pub mod export;
 pub mod hash;
+pub mod import;
 pub mod pe_size;
 pub mod rich;
 pub mod rich_headers;
 pub mod rsrc;
 pub mod sections;
 pub mod sig;
+pub mod strings;
 pub mod timestamps;
 pub mod tls;
