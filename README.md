@@ -4,24 +4,36 @@ Rust blazing fast cross-platform and hopefully accurate alternative to [pecli](h
 
 This project currently relies on the [`exe`](https://crates.io/crates/exe) create, that was created with malware parsing in mind.
 
+It also exports its parsed data through a lib you can use in your own projects.
+Some command can also output their result as a JSON string for you to parse.
 
 ## Usage
 ```
 Rust cli tool to parse PE files
 
-Usage: rpecli.exe [OPTIONS] <COMMAND>
+
+This tool is still under development.
+Some of the commands have a `--json` argument that outputs the result as a JSON string.
+Try "rpecli COMMAND --help" to show help for a specific command.
+Certain commands support multiple PE files as arguments and will compare them if you give multiple PE files.
+
+Usage: rpecli [OPTIONS] <COMMAND>
 
 Commands:
   info           Print all available information
   import-export  Print both import and exports
   import         Print imports
   export         Print exports
-  rsrc           Print resources
+  rich           Rich headers
+  rsrc           Print or dump resources
   sig            Print authenticode signature
+  disass         Disassemble section
+  strings        Print strings
+  test           Test command for development
   help           Print this message or the help of the given subcommand(s)
 
 Options:
-  -n, --no-hash  Do not compute hash of PE file. (This should greatly improve performance)
+  -n, --no-hash  Do not compute any hashes when reading PE file. (Enabling this option should greatly improve performance)
   -h, --help     Print help
   -V, --version  Print version
 ```
