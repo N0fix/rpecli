@@ -29,7 +29,7 @@ pub fn rich_cmd(pe_filepaths: &Vec<String>, json_output: bool) {
             continue;
         };
         // println!("Rich:\n{}", "=".repeat(if true { 80 } else { 0 }));
-        let richs = RichTable::parse_pe(&image);
+        let richs = RichTable::parse(&image);
         // display_rich(&image);
         // if ! json_output {
         // write!(stdout(), "{}", serde_json::to_string(&x).unwrap());

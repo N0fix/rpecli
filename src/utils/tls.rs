@@ -1,6 +1,6 @@
 use crate::utils::sections::get_section_name_from_offset;
 use colored::Colorize;
-use exe::{Address, ImageTLSDirectory32, ImageTLSDirectory64, VecPE, PE};
+use exe::{Address, ImageTLSDirectory32, ImageTLSDirectory64, VecPE, PE, PETranslation, RVA};
 
 struct TLSCallbacks {
     callbacks: Vec<u64>,
@@ -44,11 +44,18 @@ fn handle_callbacks<A: Address>(callbacks: &[A], pe: &VecPE) {
             exe::VA::VA32(val) => val.0.into(),
             exe::VA::VA64(val) => val.0,
         };
-        let matching_section_name = match get_section_name_from_offset(callback_va, pe) {
-            Some(s) => s,
-            None => String::from("Not in a section"),
-        };
-        println!("\t{} => {}", callback_va, matching_section_name);
+        print!("\t{:#x}", callback_va);
+        if let Ok(cb_rva) = callback.as_rva(pe) {
+            let s = match get_section_name_from_offset(cb_rva.0 as u64, pe) {
+                Some(s) => print!(" => {}", s),
+                None => print!(" => Not in a section"),
+            };
+        }
+        // if let Ok(addr) = pe.translate(PETranslation::Memory(RVA { 0: callback_va as u32 })) {
+            
+            // print!("{}", s);
+        // }
+        println!("");
     }
 }
 

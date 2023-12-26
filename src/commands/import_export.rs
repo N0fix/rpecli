@@ -1,7 +1,10 @@
 use crate::import_export;
+use crate::utils::export::Exports;
+use crate::utils::import::Imports;
 use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 use colored::Colorize;
 use exe::{FileCharacteristics, VecPE, PE};
+use std::io::{stdout, Write};
 
 fn display_import_export(pe_filepath: &str) {
     let Ok(image) = VecPE::from_disk_file(pe_filepath) else {
@@ -50,14 +53,30 @@ pub fn import_export_cmd(pe_filepaths: &Vec<String>) {
     }
 }
 
-pub fn import_cmd(pe_filepaths: &Vec<String>) {
+pub fn import_cmd(pe_filepaths: &Vec<String>, json_output: bool) {
     for file in pe_filepaths {
-        display_imports(file);
+        if json_output {
+            let Ok(image) = VecPE::from_disk_file(file) else {
+                panic!("{}", alert_format!(format!("Could not read {}", file)));
+            };
+            let imp = Imports::parse(&image);
+            write!(stdout(), "{}", serde_json::to_string(&imp.ok()).unwrap());
+        } else {
+            display_imports(file);
+        }
     }
 }
 
-pub fn export_cmd(pe_filepaths: &Vec<String>) {
+pub fn export_cmd(pe_filepaths: &Vec<String>, json_output: bool) {
     for file in pe_filepaths {
-        display_exports(file);
+        if json_output {
+            let Ok(image) = VecPE::from_disk_file(file) else {
+                panic!("{}", alert_format!(format!("Could not read {}", file)));
+            };
+            let exp = Exports::parse(&image);
+            write!(stdout(), "{}", serde_json::to_string(&exp.ok()).unwrap());
+        } else {
+            display_exports(file);
+        }
     }
 }

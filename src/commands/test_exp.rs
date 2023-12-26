@@ -95,7 +95,7 @@ pub fn test_cmd(pe_filepaths: &Vec<String>) {
 
         x.push(FilesRich {
             filename: file.to_owned(),
-            rich: RichTable::parse_pe(&image),
+            rich: RichTable::parse(&image),
         });
     }
     println!("{}", serde_json::to_string(&x).unwrap());
@@ -110,7 +110,7 @@ pub fn test_cmd(pe_filepaths: &Vec<String>) {
         // println!("{}", file);
         x.push(FilesSection {
             filename: file.to_owned(),
-            section: Section::parse_pe(&image),
+            section: Section::parse(&image),
         });
         println!("{}", serde_json::to_string(&x).unwrap());
     }

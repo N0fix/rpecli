@@ -3,20 +3,20 @@ use std::{ffi::CStr, fmt, io::Read, mem};
 use dataview::Pod;
 use exe::{DebugDirectory, ImageDebugDirectory, ImageDirectoryEntry, VecPE, PE};
 use pkbuffer::Buffer;
-
+use serde::{Deserialize, Serialize};
 use crate::utils::debug::{DebugEntry, ImageDebugType, ReadError, ReadFrom};
 
-#[derive(Copy, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum CodeView<'a> {
     /// CodeView 2.0 debug information.
     Cv20 {
-        image: &'a IMAGE_DEBUG_CV_INFO_PDB20,
-        pdb_file_name: &'a CStr,
+        image: IMAGE_DEBUG_CV_INFO_PDB20,
+        pdb_file_name: &'a str,
     },
     /// CodeView 7.0 debug information.
     Cv70 {
-        image: &'a IMAGE_DEBUG_CV_INFO_PDB70,
-        pdb_file_name: &'a CStr,
+        image: IMAGE_DEBUG_CV_INFO_PDB70,
+        pdb_file_name: &'a str,
     },
 }
 
@@ -42,17 +42,17 @@ impl<'pe> ReadFrom<'pe> for CodeView<'pe> {
                 match &vc_type {
                     VC20 => {
                         let info = unsafe { &*(x.as_ptr() as *const IMAGE_DEBUG_CV_INFO_PDB20) };
-                        let pdb_file_name = CStr::from_bytes_until_nul(&x[12..]).unwrap();
+                        let pdb_file_name = CStr::from_bytes_until_nul(&x[12..]).unwrap().to_str().unwrap();
                         CodeView::Cv20 {
-                            image: info,
+                            image: info.to_owned(),
                             pdb_file_name: pdb_file_name,
                         }
                     }
                     VC70 => {
                         let info = unsafe { &*(x.as_ptr() as *const IMAGE_DEBUG_CV_INFO_PDB70) };
-                        let pdb_file_name = CStr::from_bytes_until_nul(&x[20..]).unwrap();
+                        let pdb_file_name = CStr::from_bytes_until_nul(&x[20..]).unwrap().to_str().unwrap();
                         CodeView::Cv70 {
-                            image: info,
+                            image: info.to_owned(),
                             pdb_file_name: pdb_file_name,
                         }
                     }
@@ -162,7 +162,7 @@ impl<'a> CodeView<'a> {
     //         CodeView::Cv70 { image, .. } => image.Age,
     //     }
     // }
-    pub fn pdb_file_name(&self) -> &'a CStr {
+    pub fn pdb_file_name(&self) -> &'a str {
         match self {
             CodeView::Cv20 { pdb_file_name, .. } => pdb_file_name,
             CodeView::Cv70 { pdb_file_name, .. } => pdb_file_name,
@@ -170,7 +170,7 @@ impl<'a> CodeView<'a> {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
 #[repr(C)]
 pub struct GUID {
     pub data1: u32,
@@ -180,7 +180,7 @@ pub struct GUID {
     pub data5: [u8; 4],
     pub data6: [u8; 2],
 }
-#[derive(Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
 #[repr(C)]
 pub struct IMAGE_DEBUG_CV_INFO_PDB70 {
     // pub cv_signature: u32,
@@ -189,7 +189,7 @@ pub struct IMAGE_DEBUG_CV_INFO_PDB70 {
     pub PdbFileName: [u8; 0],
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
 #[repr(C)]
 pub struct IMAGE_DEBUG_CV_INFO_PDB20 {
     pub Offset: u32,
@@ -241,7 +241,7 @@ impl<'a> fmt::Display for CodeView<'a> {
             f,
             "    {:15}: \"{:#}\"\n",
             "PDB filename",
-            self.pdb_file_name().to_str().unwrap()
+            self.pdb_file_name()
         )
     }
 }

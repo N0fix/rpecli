@@ -1,16 +1,16 @@
 [package]
 name = "rpecli"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license-file = "LICENSE"
 repository = "https://github.com/N0fix/rpecli"
 authors = ["Nofix"]
 keywords = ["pe", "portable-executable", "rpecli"]
 readme = "README.md"
-description = "Rust cli tool to parse PE files"
+description = "Rust cli tool to display information about PE files"
 
 [dependencies]
-authenticode = "0.3.0"
+authenticode = { git = "https://github.com/google/authenticode-rs.git" }#"0.3.0"
 bytemuck = "1.13.1"
 chrono = "0.4.26"
 clap = { version = "4.3.8", features = ["derive"] }
@@ -39,11 +39,18 @@ serde = { version = "1.0.183", features = ["derive"] }
 [dependencies.iced-x86]
 version = "1.19.0"
 default-features = false
-# See below for all features
 features = ["std", "decoder", "intel"]
 
 [profile.release]
 strip = "none"
+# Some ptr might be unaligned when parsing import/export thunks, thus panicking rust
+# see https://stackoverflow.com/questions/76647616/facing-unexpected-misaligned-pointer-dereference-address-must-be-a-multiple-of/76648301#76648301
+debug-assertions = false
+
+[profile.dev]
+# Some ptr might be unaligned when parsing import/export thunks, thus panicking rust
+# see https://stackoverflow.com/questions/76647616/facing-unexpected-misaligned-pointer-dereference-address-must-be-a-multiple-of/76648301#76648301
+debug-assertions = false
 
 [lib]
 name = "rpecli"

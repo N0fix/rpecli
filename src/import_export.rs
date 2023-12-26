@@ -1,20 +1,19 @@
+use crate::utils::export::Exports;
+use crate::utils::import::Imports;
+// use crate::utils::import::Imports;
+use dataview::PodMethods;
 use crate::utils::timestamps::format_timestamp;
 use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
-use chrono::{DateTime, NaiveDateTime, Utc};
 use colored::Colorize;
-use dataview::PodMethods;
-use exe::headers::ImageImportDescriptor;
 use exe::{
     CCharString, ExportDirectory, HashData, ImageDirectoryEntry, ImageExportDirectory,
     ImageImportByName, ImportData, ImportDirectory, PETranslation, SectionCharacteristics, Thunk32,
     ThunkData, ThunkFunctions, VecPE, PE, RVA,
 };
-use ngrammatic::NgramBuilder;
-use std::error::Error;
-use std::f32::consts::E;
-use std::ffi::CStr;
+
 
 pub fn display_imports(pe: &VecPE) -> Result<(), exe::Error> {
+    let x = pe.clone();
     let import_directory = match ImportDirectory::parse(pe) {
         Ok(import_dir) => import_dir,
         Err(_) => {
@@ -22,38 +21,23 @@ pub fn display_imports(pe: &VecPE) -> Result<(), exe::Error> {
             return Err(exe::Error::BadDirectory(ImageDirectoryEntry::Import));
         }
     };
-    for import in import_directory.descriptors {
-        let dll_name = match import.get_name(pe) {
-            Ok(n) => match n.as_str() {
-                Ok(s) => s.to_string().to_ascii_lowercase(),
-                Err(e) => return Err(e),
-            },
-            Err(e) => return Err(e),
-        };
-        println!("\n{}", dll_name.bold());
-        let import_entries = match import.get_imports(pe) {
-            Ok(import_entries) => import_entries,
-            Err(e) => {
-                println!(
-                    "{}",
-                    format!(
-                        "{} (err: {})",
-                        "Import entries are invalid. Is this a bad memory dump?",
-                        { e }
-                    )
-                    .red()
-                );
-                return Err(exe::Error::BadDirectory(ImageDirectoryEntry::Import));
+
+    let Ok(imports) = Imports::parse(pe) else {
+        println!("\n\t{}", "Invalid import table".red());
+        return Ok(());
+    };
+
+    for import in &imports.modules {
+        println!("\n{}", import.name.bold());
+        for imported_fn in &import.imports {
+            print!("\t{}", imported_fn.name);
+            if imported_fn.import_by_ordinal {
+                print!("(Import by ordinal)");
             }
-        };
-        for import_data in import_entries {
-            let import_name = match import_data {
-                ImportData::Ordinal(x) => format!("{:8} (Import by ordinal)", x.to_string()),
-                ImportData::ImportByName(s) => s.to_string(),
-            };
-            println!("\t{import_name}");
+            println!("");
         }
     }
+
     println!(
         "\nimphash: {}",
         hex::encode(pe.calculate_imphash().unwrap())
@@ -62,47 +46,6 @@ pub fn display_imports(pe: &VecPE) -> Result<(), exe::Error> {
     Ok(())
 }
 
-pub fn get_export_map_test<'data, P: PE>(
-    s: &ImageExportDirectory,
-    pe: &'data P,
-) -> Result<Vec<(u16, &'data str, ThunkData)>, Box<dyn Error>> {
-    let mut result: Vec<(u16, &'data str, ThunkData)> = vec![];
-
-    let directory = pe.get_data_directory(ImageDirectoryEntry::Export)?;
-    let start = directory.virtual_address.clone();
-    let end = RVA(start.0 + directory.size);
-
-    let functions = s.get_functions(pe)?;
-    let names = s.get_names(pe)?;
-    let ordinals = s.get_name_ordinals(pe)?;
-    // let funcs = s.get_functions(pe)?;
-
-    for index in 0u32..s.number_of_names {
-        let name_rva = names[index as usize];
-        if name_rva.0 == 0 {
-            continue;
-        }
-
-        let Ok(name_offset) = pe.translate(PETranslation::Memory(name_rva)) else {
-            continue; /* we continue instead of returning the error to be greedy with parsing */
-        };
-
-        let Ok(name) = pe.get_cstring(name_offset, false, None) else {
-            continue;
-        };
-
-        let ordinal = ordinals[index as usize];
-        let function = functions[ordinal as usize].parse_export(start, end);
-        let name_str = match name.as_str() {
-            Ok(s) => s,
-            Err(_) => continue,
-        };
-        result.push((ordinal + 1, name_str, function));
-    }
-    // could also color API depending of usage w/ https://github.com/vadimkotov/winapi-json
-    result.sort_by(|a, b| a.0.cmp(&b.0));
-    Ok(result)
-}
 
 pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
     let export_table = match ExportDirectory::parse(pe) {
@@ -121,20 +64,21 @@ pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
         print!("\n\"{}\" => ", export_bin_name.bold());
     }
 
-    let Ok(exports) = get_export_map_test(export_table, pe) else {
+    let Ok(exports) = Exports::parse(pe) else {
         println!("\n\t{}", "Invalid export table".red());
         return Ok(());
     };
-    println!("{} exported function(s)", exports.len());
 
-    for (ordinal, export, thunk) in &exports {
+    println!("{} exported function(s)", exports.entries.len());
+    let empty_str = warn_format!("(EXPORT HAS NO NAME)").to_string();
+    for entry in &exports.entries {
         println!(
-            "\t {:>2} {} {}",
-            ordinal,
-            format!("{}", export),
-            match thunk {
-                ThunkData::ForwarderString(_) => warn_format!("(Forwarded export)"),
-                _ => "".normal(),
+            "\t {:>2} => {} {}",
+            &entry.ordinal,
+            format!("{}", &entry.name.as_ref().or_else(|| Some(&empty_str)).unwrap()),
+            match &entry.forwarded_name {
+                Some(name) => warn_format!(format!("(Forwarded export) => {}", name)),
+                None => "".normal(),
             }
         );
     }
