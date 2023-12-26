@@ -1,10 +1,10 @@
 use std::{ffi::CStr, fmt, io::Read, mem};
 
+use crate::utils::debug::{DebugEntry, ImageDebugType, ReadError, ReadFrom};
 use dataview::Pod;
 use exe::{DebugDirectory, ImageDebugDirectory, ImageDirectoryEntry, VecPE, PE};
 use pkbuffer::Buffer;
 use serde::{Deserialize, Serialize};
-use crate::utils::debug::{DebugEntry, ImageDebugType, ReadError, ReadFrom};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum CodeView<'a> {
@@ -42,7 +42,10 @@ impl<'pe> ReadFrom<'pe> for CodeView<'pe> {
                 match &vc_type {
                     VC20 => {
                         let info = unsafe { &*(x.as_ptr() as *const IMAGE_DEBUG_CV_INFO_PDB20) };
-                        let pdb_file_name = CStr::from_bytes_until_nul(&x[12..]).unwrap().to_str().unwrap();
+                        let pdb_file_name = CStr::from_bytes_until_nul(&x[12..])
+                            .unwrap()
+                            .to_str()
+                            .unwrap();
                         CodeView::Cv20 {
                             image: info.to_owned(),
                             pdb_file_name: pdb_file_name,
@@ -50,7 +53,10 @@ impl<'pe> ReadFrom<'pe> for CodeView<'pe> {
                     }
                     VC70 => {
                         let info = unsafe { &*(x.as_ptr() as *const IMAGE_DEBUG_CV_INFO_PDB70) };
-                        let pdb_file_name = CStr::from_bytes_until_nul(&x[20..]).unwrap().to_str().unwrap();
+                        let pdb_file_name = CStr::from_bytes_until_nul(&x[20..])
+                            .unwrap()
+                            .to_str()
+                            .unwrap();
                         CodeView::Cv70 {
                             image: info.to_owned(),
                             pdb_file_name: pdb_file_name,

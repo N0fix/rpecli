@@ -10,6 +10,7 @@ readme = "README.md"
 description = "Rust cli tool to display information about PE files"
 
 [dependencies]
+# authenticode = "0.3.0"
 authenticode = { git = "https://github.com/google/authenticode-rs.git" }#"0.3.0"
 bytemuck = "1.13.1"
 chrono = "0.4.26"

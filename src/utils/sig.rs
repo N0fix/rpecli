@@ -5,13 +5,13 @@ use authenticode::{
     AttributeCertificateError, AttributeCertificateIterator, AuthenticodeSignature, PeOffsets,
     PeTrait,
 };
-use serde::{Deserialize, Serialize};
 use cms::signed_data::SignerIdentifier;
 use colored::Colorize;
 use exe::{
     pe, Address, ImageDataDirectory, VSFixedFileInfo, VSStringFileInfo, VSStringTable,
     VSVersionInfo, VecPE, WCharString, PE, RVA,
 };
+use serde::{Deserialize, Serialize};
 
 struct PEForParsing {
     pe: exe::pe::VecPE,
@@ -103,20 +103,20 @@ impl PeTrait for PEForParsing {
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct Identifier {
     pub issuer: String,
-    pub serial_number: String
+    pub serial_number: String,
 }
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct Cert {
     pub issuer: String,
     pub subject: String,
-    pub serial_number: String
+    pub serial_number: String,
 }
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct AuthenSig {
     // signature_index: u32,
     pub digest: String,
     pub issuer: Option<Identifier>,
-    pub certificates: Vec<Cert>
+    pub certificates: Vec<Cert>,
 }
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct PeAuthenticodes {
@@ -139,19 +139,24 @@ impl PeAuthenticodes {
                 for (sig_id, sig) in sigs.enumerate() {
                     match sig {
                         Ok(s) => {
-                            if s.get_authenticode_signature().is_ok(){
-                                result.signatures.push(AuthenSig::from(s.get_authenticode_signature().unwrap()))
+                            if s.get_authenticode_signature().is_ok() {
+                                result
+                                    .signatures
+                                    .push(AuthenSig::from(s.get_authenticode_signature().unwrap()))
                             }
-                        },
+                        }
                         Err(e) => {
                             match e {
-                                AttributeCertificateError::InvalidCertificateSize { size } => return Err(AttributeCertificateError::InvalidCertificateSize { size: sig_id as u32 + 1 }),
+                                AttributeCertificateError::InvalidCertificateSize { size } => {
+                                    return Err(AttributeCertificateError::InvalidCertificateSize {
+                                        size: sig_id as u32 + 1,
+                                    })
+                                }
                                 _ => {}
                             };
                             return Err(e);
-                        },
+                        }
                     };
-                    
                 }
             }
         }
@@ -160,28 +165,28 @@ impl PeAuthenticodes {
     }
 }
 
-
-
 impl From<AuthenticodeSignature> for AuthenSig {
     fn from(value: AuthenticodeSignature) -> Self {
         let mut identifier: Option<Identifier> = None;
         if let SignerIdentifier::IssuerAndSerialNumber(sid) = &value.signer_info().sid {
             identifier = Some(Identifier {
                 issuer: sid.issuer.to_string(),
-                serial_number: sid.serial_number.to_string()
+                serial_number: sid.serial_number.to_string(),
             });
         }
         let mut certs = vec![];
         for cert in value.certificates() {
-            certs.push(
-                Cert{
-                    issuer: cert.tbs_certificate.issuer.to_string(),
-                    subject: cert.tbs_certificate.subject.to_string(),
-                    serial_number: cert.tbs_certificate.serial_number.to_string()
-                }
-            );
+            certs.push(Cert {
+                issuer: cert.tbs_certificate.issuer.to_string(),
+                subject: cert.tbs_certificate.subject.to_string(),
+                serial_number: cert.tbs_certificate.serial_number.to_string(),
+            });
         }
-        AuthenSig { digest: hex::encode(&value.digest()), issuer: identifier, certificates: certs }
+        AuthenSig {
+            digest: hex::encode(&value.digest()),
+            issuer: identifier,
+            certificates: certs,
+        }
     }
 }
 
@@ -211,11 +216,7 @@ impl Display for PeAuthenticodes {
 
                 writeln!(f, "    Issuer:        {}", cert.issuer)?;
                 writeln!(f, "    Subject:       {}", cert.subject)?;
-                writeln!(
-                    f,
-                    "    Serial number: {}",
-                    cert.serial_number
-                )?;
+                writeln!(f, "    Serial number: {}", cert.serial_number)?;
             }
         }
         writeln!(f, "")
@@ -240,8 +241,11 @@ pub fn display_sig(pe: &VecPE) {
                 );
                 return;
             }
-            AttributeCertificateError::InvalidCertificateSize { size }=> {
-                println!("{}", alert_format!(format!("Signature {} has an invalid size", size)));
+            AttributeCertificateError::InvalidCertificateSize { size } => {
+                println!(
+                    "{}",
+                    alert_format!(format!("Signature {} has an invalid size", size))
+                );
                 return;
             }
         },

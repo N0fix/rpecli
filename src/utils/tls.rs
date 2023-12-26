@@ -1,6 +1,6 @@
 use crate::utils::sections::get_section_name_from_offset;
 use colored::Colorize;
-use exe::{Address, ImageTLSDirectory32, ImageTLSDirectory64, VecPE, PE, PETranslation, RVA};
+use exe::{Address, ImageTLSDirectory32, ImageTLSDirectory64, PETranslation, VecPE, PE, RVA};
 
 struct TLSCallbacks {
     callbacks: Vec<u64>,
@@ -52,8 +52,8 @@ fn handle_callbacks<A: Address>(callbacks: &[A], pe: &VecPE) {
             };
         }
         // if let Ok(addr) = pe.translate(PETranslation::Memory(RVA { 0: callback_va as u32 })) {
-            
-            // print!("{}", s);
+
+        // print!("{}", s);
         // }
         println!("");
     }

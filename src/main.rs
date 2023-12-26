@@ -16,7 +16,6 @@ use crate::commands::sig::sig_cmd;
 use crate::commands::strings::strings_cmd;
 use compare::Comparable;
 
-
 #[derive(Subcommand, Debug)]
 enum SubCommand {
     /// Print all available information
@@ -43,7 +42,7 @@ enum SubCommand {
 
 /// This tool is still under development.
 /// Some of the commands have a `--json` argument that outputs the result as a JSON string.
-/// Try "rpecli COMMAND --help" to show help for a specific command. 
+/// Try "rpecli COMMAND --help" to show help for a specific command.
 /// Certain commands support multiple PE files as arguments and will compare them if you give multiple PE files.
 #[derive(Parser, Debug)]
 #[clap(version)]
@@ -55,7 +54,6 @@ struct Arguments {
     #[clap(subcommand)]
     cmd: SubCommand,
 }
-
 
 #[derive(Parser, Debug, Clone)]
 struct PEArgs {

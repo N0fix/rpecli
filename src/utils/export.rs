@@ -42,31 +42,31 @@ impl Exports {
         let names = s.get_names(pe)?;
         let ordinals = s.get_name_ordinals(pe)?;
 
-
         let export_name = match s.get_name(pe) {
             Ok(name) => String::from(name.as_str()?),
             Err(_) => String::new(),
         };
         for index in 0u32..s.number_of_functions {
-            let name = |names: &[RVA], index: u32| -> Option<String>{
+            let name = |names: &[RVA], index: u32| -> Option<String> {
                 let name_rva = names.get(index as usize)?;
                 let Ok(name_offset) = pe.translate(PETranslation::Memory(*name_rva)) else {
                     return None; /* we continue instead of returning the error to be greedy with parsing */
                 };
-    
+
                 let Ok(name) = pe.get_cstring(name_offset, false, None) else {
                     return None;
                 };
-    
+                // println!("{}", name.len());
+
                 let str = match name.as_str() {
                     Ok(s) => Some(String::from(s)),
                     Err(_) => None,
                 };
                 str
             }(names, index);
-            
+
             let function = functions[index as usize].parse_export(start, end);
-            
+
             let forwarded_name = match function {
                 ThunkData::ForwarderString(rva) => match pe.translate(PETranslation::Memory(rva)) {
                     Ok(addr) => match pe.get_cstring(addr, false, None) {
@@ -77,7 +77,7 @@ impl Exports {
                 },
                 _ => None,
             };
-            
+
             export_entries.push(ExportEntry {
                 name: name,
                 ordinal: s.base as u16 + index as u16,

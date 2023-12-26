@@ -21,10 +21,7 @@ fn display_signature(pe_filepath: &str) {
 pub fn sig_cmd(pe_filepaths: &Vec<String>, json_print: bool) {
     for file in pe_filepaths {
         let Ok(image) = VecPE::from_disk_file(file) else {
-            println!(
-                "{}",
-                alert_format!(format!("Could not read {}", file))
-            );
+            println!("{}", alert_format!(format!("Could not read {}", file)));
             return;
         };
         let sigs = match PeAuthenticodes::parse(&image) {
@@ -40,17 +37,22 @@ pub fn sig_cmd(pe_filepaths: &Vec<String>, json_print: bool) {
                 AttributeCertificateError::InvalidSize => {
                     println!(
                         "{}",
-                        alert_format!("Security directory exists, but signature has an invalid size")
+                        alert_format!(
+                            "Security directory exists, but signature has an invalid size"
+                        )
                     );
                     return;
                 }
-                AttributeCertificateError::InvalidCertificateSize { size }=> {
-                    println!("{}", alert_format!(format!("Signature {} has an invalid size", size)));
+                AttributeCertificateError::InvalidCertificateSize { size } => {
+                    println!(
+                        "{}",
+                        alert_format!(format!("Signature {} has an invalid size", size))
+                    );
                     return;
                 }
             },
         };
-        if(json_print) {
+        if (json_print) {
             write!(stdout(), "{}", serde_json::to_string(&sigs).unwrap());
         } else {
             println!("{}", sigs);

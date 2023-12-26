@@ -39,6 +39,45 @@ Options:
 ```
 
 ```
+rpecli export --json sample
+{
+  "characteristics": 0,
+  "major_version": 0,
+  "minor_version": 0,
+  "name": "Qt5Widgets.dll",
+  "base": 1,
+  "number_of_functions": 8990,
+  "number_of_names": 8990,
+  "address_of_functions": 3557432,
+  "address_of_names": 3593392,
+  "address_of_names_ordinals": 3629352,
+  "timestamp": 4294967295,
+  "entries": [
+    {
+      "name": "??0QAbstractButton@@IAE@AAVQAbstractButtonPrivate@@PAVQWidget@@@Z",
+      "ordinal": 1,
+      "rva": 775280,
+      "forwarded_name": null
+    },
+    {
+      "name": "??0QAbstractButton@@QAE@PAVQWidget@@@Z",
+      "ordinal": 2,
+      "rva": 775344,
+      "forwarded_name": null
+    },
+    {
+      "name": "??0QAbstractGraphicsShapeItem@@IAE@AAVQAbstractGraphicsShapeItemPrivate@@PAVQGraphicsItem@@@Z",
+      "ordinal": 3,
+      "rva": 2341920,
+      "forwarded_name": null
+    },
+  ...
+  ]
+}
+```
+
+
+```
 .\rpecli kernel32.dll
 
 Metadata:
@@ -206,9 +245,6 @@ cargo install --path .
 
 ## TODO
 - Refacto of some parts
-- Error handling
-- Possiblity to dump resources
-- Feature to handle comparing some fields between multiple binaries to help finding header similarities
 
 ## Internals
 
@@ -222,8 +258,3 @@ This project uses code from the following projects :
 - [authenticode](https://crates.io/crates/authenticode)
 - [pelite](https://crates.io/crates/pelite)
 - [exe](https://crates.io/crates/exe)
-
-
-## Issues
-
-`54476b502ccd2c35f7c1642c20480e65310d51fc3e46abd01870c9bda5f5797e` is known not break exports.
