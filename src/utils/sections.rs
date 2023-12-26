@@ -28,7 +28,7 @@ pub struct Section<'data> {
 }
 
 impl Section<'_> {
-    pub fn parse_pe(pe: &VecPE) -> SectionTable {
+    pub fn parse(pe: &VecPE) -> SectionTable {
         let mut result = SectionTable { sections: vec![] };
         match pe.get_section_table() {
             Ok(sec_tbl) => {
@@ -274,11 +274,11 @@ impl Display for SectionTable<'_> {
 }
 
 pub fn display_sections(pe: &VecPE) {
-    println!("{}", Section::parse_pe(pe));
+    println!("{}", Section::parse(pe));
 }
 
 pub fn get_section_name_from_offset(offset: u64, pe: &VecPE) -> Option<String> {
-    let sections = Section::parse_pe(pe);
+    let sections = Section::parse(pe);
 
     for section in sections.sections {
         if offset >= (section.virt_addr as u64)

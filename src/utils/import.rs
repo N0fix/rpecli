@@ -14,13 +14,13 @@ pub struct ImportFunction {
 
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct ImportEntry {
-    pub module: String,
-    pub functions: Vec<ImportFunction>,
+    pub name: String,
+    pub imports: Vec<ImportFunction>,
 }
 
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct Imports {
-    pub entries: Vec<ImportEntry>,
+    pub modules: Vec<ImportEntry>,
 }
 
 impl Imports {
@@ -36,7 +36,7 @@ impl Imports {
         for import in import_directory.descriptors {
             let mut entry = ImportEntry::default();
 
-            entry.module = match import.get_name(pe) {
+            entry.name = match import.get_name(pe) {
                 Ok(n) => match n.as_str() {
                     Ok(s) => s.to_string().to_ascii_lowercase(),
                     Err(e) => return Err(e),
@@ -56,13 +56,13 @@ impl Imports {
                     ImportData::ImportByName(s) => s.to_string(),
                 };
                 let is_import_by_ordinal = matches!(import_data, ImportData::Ordinal(_));
-                entry.functions.push(ImportFunction {
+                entry.imports.push(ImportFunction {
                     name: function_name,
                     import_by_ordinal: is_import_by_ordinal,
                 });
             }
 
-            result.entries.push(entry);
+            result.modules.push(entry);
         }
 
         Ok(result)

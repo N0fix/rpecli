@@ -5,3 +5,8 @@ pub mod utils;
 pub use compare::Comparable;
 pub use utils::export::Exports;
 pub use utils::import::Imports;
+pub use utils::rsrc::Resources;
+pub use utils::rich::RichTable;
+pub use utils::debug::DebugEntries;
+pub use utils::sections::Section;
+pub use utils::sig::PeAuthenticodes;

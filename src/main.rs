@@ -16,6 +16,7 @@ use crate::commands::sig::sig_cmd;
 use crate::commands::strings::strings_cmd;
 use compare::Comparable;
 
+
 #[derive(Subcommand, Debug)]
 enum SubCommand {
     /// Print all available information
@@ -26,6 +27,8 @@ enum SubCommand {
     Import(PEArgs),
     /// Print exports
     Export(PEArgs),
+    /// Rich headers
+    Rich(RichArg),
     /// Print or dump resources
     Rsrc(RsrcArg),
     /// Print authenticode signature
@@ -34,10 +37,14 @@ enum SubCommand {
     Disass(DisassArg),
     /// Print strings
     Strings(PEArgs),
-    /// Test
+    /// Test command for development
     Test(PEArgs),
 }
 
+/// This tool is still under development.
+/// Some of the commands have a `--json` argument that outputs the result as a JSON string.
+/// Try "rpecli COMMAND --help" to show help for a specific command. 
+/// Certain commands support multiple PE files as arguments and will compare them if you give multiple PE files.
 #[derive(Parser, Debug)]
 #[clap(version)]
 struct Arguments {
@@ -49,8 +56,12 @@ struct Arguments {
     cmd: SubCommand,
 }
 
+
 #[derive(Parser, Debug, Clone)]
 struct PEArgs {
+    /// Output as json
+    #[clap(short, long)]
+    json: bool,
     #[clap(required = true, value_delimiter = ' ', num_args = 1..)]
     pe: Vec<String>,
 }
@@ -74,9 +85,12 @@ struct DisassArg {
 struct RsrcArg {
     #[clap(required = true, value_delimiter = ' ', num_args = 1..)]
     pe: Vec<String>,
-    /// Dump resources to /tmp/resources/
+    /// Dump resources to <temp dir>/resources/
     #[clap(short, long)]
     dump: bool,
+    /// Output as json
+    #[clap(short, long)]
+    json: bool,
 }
 
 fn main() {
@@ -91,13 +105,22 @@ fn main() {
             import_export_cmd(&subcommand_args.pe);
         }
         SubCommand::Rsrc(subcommand_args) => {
-            rsrc_cmd(&subcommand_args.pe, !args.no_hash, subcommand_args.dump);
+            rsrc_cmd(
+                &subcommand_args.pe,
+                !args.no_hash,
+                subcommand_args.dump,
+                subcommand_args.json,
+            );
         }
         SubCommand::Sig(subcommand_args) => {
-            sig_cmd(&subcommand_args.pe);
+            sig_cmd(&subcommand_args.pe, subcommand_args.json);
         }
-        SubCommand::Import(subcommand_args) => import_cmd(&subcommand_args.pe),
-        SubCommand::Export(subcommand_args) => export_cmd(&subcommand_args.pe),
+        SubCommand::Import(subcommand_args) => {
+            import_cmd(&subcommand_args.pe, subcommand_args.json)
+        }
+        SubCommand::Export(subcommand_args) => {
+            export_cmd(&subcommand_args.pe, subcommand_args.json)
+        }
         SubCommand::Disass(subcommand_args) => {
             disass_section(&subcommand_args.pe, &subcommand_args.section_name)
         }

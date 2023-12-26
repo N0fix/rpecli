@@ -23,7 +23,7 @@ pub struct RichTable {
 }
 
 impl RichTable {
-    pub fn parse_pe(pe: &VecPE) -> RichTable {
+    pub fn parse(pe: &VecPE) -> RichTable {
         let mut rich_table: RichTable = RichTable {
             rich_entries: vec![],
             key: 0,
@@ -148,6 +148,6 @@ impl Display for RichTable {
 }
 
 pub fn display_rich(pe: &VecPE) {
-    let richs = RichTable::parse_pe(pe);
+    let richs = RichTable::parse(pe);
     println!("{}", richs);
 }

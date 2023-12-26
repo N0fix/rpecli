@@ -210,3 +210,8 @@ This project uses code from the following projects :
 - [authenticode](https://crates.io/crates/authenticode)
 - [pelite](https://crates.io/crates/pelite)
 - [exe](https://crates.io/crates/exe)
+
+
+## Issues
+
+`54476b502ccd2c35f7c1642c20480e65310d51fc3e46abd01870c9bda5f5797e` is known not break exports.
