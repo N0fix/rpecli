@@ -1,3 +1,6 @@
+[![Crates.io](https://img.shields.io/crates/v/rpecli)](https://crates.io/crates/rpecli)
+[![Docs.rs](https://docs.rs/rpecli/badge.svg)](https://docs.rs/rpecli)
+
 # RPECLI
 
 Rust blazing fast cross-platform and hopefully accurate alternative to [pecli](https://github.com/Te-k/pecli). `pecli` is a great tool, but it uses pefile, which is a bit slow to load PE executables, especialy when dealing with a whole lot of executables.
