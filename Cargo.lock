@@ -102,8 +102,9 @@ dependencies = [
 
 [[package]]
 name = "authenticode"
-version = "0.3.0"
-source = "git+https://github.com/google/authenticode-rs.git#f73e8a9c46a50821d6f98e812ce57e6a3ffc42c9"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d538cdb5cae4d4c529334e39bed7cfc4a6edfab01bbf067ab1aeed272d3647d"
 dependencies = [
  "cms",
  "const-oid",
