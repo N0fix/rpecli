@@ -76,98 +76,7 @@ impl<'pe> ReadFrom<'pe> for CodeView<'pe> {
 }
 
 impl<'a> CodeView<'a> {
-    // pub fn parse(pe: &VecPE) -> Option<CodeView> {
-    //     const VC20: &[u8; 4] = b"NB10";
-    //     const VC70: &[u8; 4] = b"RSDS";
-    //     let Ok(debug_directory_check) = DebugDirectory::parse(pe) else {
-    //         return None;
-    //     };
-    //     println!("Debug directory exists:");
-    //     let debug_directory = debug_directory_check;
-    //     let directory = pe.get_data_directory(ImageDirectoryEntry::Debug).unwrap();
-    //     let imgdbgdir: &[ImageDebugDirectory] = pe
-    //         .get_slice_ref(
-    //             directory.virtual_address.0 as usize,
-    //             directory.size as usize / std::mem::size_of::<ImageDebugDirectory>(),
-    //         )
-    //         .unwrap();
 
-    //     for (i, d) in imgdbgdir.into_iter().enumerate() {
-    //         println!("Entry {} type {:?}", i, ImageDebugType::from_u32(d.type_));
-    //     }
-
-    //     let cv = match ImageDebugType::from_u32(debug_directory.type_) {
-    //         ImageDebugType::Codeview => {
-    //             let start = debug_directory.address_of_raw_data;
-    //             let mut x = pe
-    //                 .read(
-    //                     debug_directory.pointer_to_raw_data.into(),
-    //                     debug_directory.size_of_data as usize,
-    //                 )
-    //                 .unwrap();
-    //             let mut vc_type: [u8; 4] = [0, 0, 0, 0];
-
-    //             x.read_exact(&mut vc_type);
-    //             match &vc_type {
-    //                 VC20 => {
-    //                     let info = unsafe { &*(x.as_ptr() as *const IMAGE_DEBUG_CV_INFO_PDB20) };
-    //                     let pdb_file_name = CStr::from_bytes_until_nul(&x[12..]).unwrap();
-    //                     Some(CodeView::Cv20 {
-    //                         image: info,
-    //                         pdb_file_name: pdb_file_name,
-    //                     })
-    //                 }
-    //                 VC70 => {
-    //                     let info = unsafe { &*(x.as_ptr() as *const IMAGE_DEBUG_CV_INFO_PDB70) };
-    //                     let pdb_file_name = CStr::from_bytes_until_nul(&x[20..]).unwrap();
-    //                     Some(CodeView::Cv70 {
-    //                         image: info,
-    //                         pdb_file_name: pdb_file_name,
-    //                     })
-    //                 }
-    //                 _ => {
-    //                     // TODO : this is bad error mgt
-    //                     None
-    //                 }
-    //             }
-    //         }
-    //         // ImageDebugType::Pogo => {
-    //         //     let start = debug_directory.address_of_raw_data;
-    //         //     let mut x = pe
-    //         //         .read(
-    //         //             debug_directory.pointer_to_raw_data.into(),
-    //         //             debug_directory.size_of_data as usize,
-    //         //         )
-    //         //         .unwrap();
-    //         //     let p = Pgo {
-    //         //         image: cast_slice(&x[0..]),
-    //         //     };
-    //         //     for item in p.iter() {
-    //         //         println!(
-    //         //             "{:#08x} {:#?} (size : {:#x})",
-    //         //             item.rva, item.name, item.size
-    //         //         );
-    //         //     }
-    //         //     // dbg!(p);
-    //         //     // let qwe = 1;
-    //         //     None
-    //         // }
-    //         _ => {
-    //             println!("{:?}", debug_directory.type_);
-    //             // TODO : this is bad error mgt
-    //             None
-    //         }
-    //     };
-
-    //     cv
-    // }
-
-    // pub fn age(&self) -> u32 {
-    //     match self {
-    //         CodeView::Cv20 { image, .. } => image.Age,
-    //         CodeView::Cv70 { image, .. } => image.Age,
-    //     }
-    // }
     pub fn pdb_file_name(&self) -> &'a str {
         match self {
             CodeView::Cv20 { pdb_file_name, .. } => pdb_file_name,
@@ -182,7 +91,7 @@ pub struct GUID {
     pub data1: u32,
     pub data2: u16,
     pub data3: u16,
-    pub data4: u16,
+    pub data4: [u8; 2],
     pub data5: [u8; 4],
     pub data6: [u8; 2],
 }
@@ -208,11 +117,11 @@ impl fmt::Display for GUID {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{{{:X}-{:X}-{:X}-{:X}-{:X}{:X}}}",
+            "{{{:08X}-{:04X}-{:04X}-{:04X}-{:08X}{:04X}}}",
             self.data1,
             self.data2,
             self.data3,
-            self.data4,
+            u16::from_be_bytes(self.data4),
             u32::from_be_bytes(self.data5),
             u16::from_be_bytes(self.data6)
         )
