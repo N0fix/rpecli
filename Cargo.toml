@@ -1,6 +1,6 @@
 [package]
 name = "rpecli"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license-file = "LICENSE"
 repository = "https://github.com/N0fix/rpecli"
@@ -42,7 +42,7 @@ default-features = false
 features = ["std", "decoder", "intel"]
 
 [profile.release]
-strip = "none"
+# strip = "none"
 # Some ptr might be unaligned when parsing import/export thunks, thus panicking rust
 # see https://stackoverflow.com/questions/76647616/facing-unexpected-misaligned-pointer-dereference-address-must-be-a-multiple-of/76648301#76648301
 debug-assertions = false
