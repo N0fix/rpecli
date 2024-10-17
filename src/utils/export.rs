@@ -20,7 +20,7 @@ pub struct Exports {
     pub characteristics: u32,
     pub major_version: u16,
     pub minor_version: u16,
-    pub name: String,
+    pub dll_name: String,
     pub base: u32,
     pub number_of_functions: u32,
     pub number_of_names: u32,
@@ -39,8 +39,17 @@ impl Exports {
         let end = RVA(start.0 + directory.size);
         let s = ImageExportDirectory::parse(pe)?;
         let functions = s.get_functions(pe)?;
-        let names = s.get_names(pe)?;
-        let ordinals = s.get_name_ordinals(pe)?;
+        let names = match s.get_names(pe){
+            Ok(e) => e,
+            Err(e) => {
+                eprintln!("Er {}", e);
+                &[]
+            },
+        };
+        let ordinals = match s.get_name_ordinals(pe) {
+            Ok(ordinals) => ordinals,
+            Err(_) => &[],
+        };
 
         let export_name = match s.get_name(pe) {
             Ok(name) => String::from(name.as_str()?),
@@ -96,7 +105,7 @@ impl Exports {
             characteristics: s.characteristics,
             major_version: s.major_version,
             minor_version: s.minor_version,
-            name: export_name,
+            dll_name: export_name,
             base: s.base,
             number_of_functions: s.number_of_functions,
             number_of_names: s.number_of_names,
