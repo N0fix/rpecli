@@ -101,6 +101,7 @@ pub fn export_cmd(pe_filepaths: &Vec<String>, json_output: bool) {
             display_exports(file);
         }
     }
-
-    write!(stdout(), "{}", serde_json::to_string(&result).unwrap());
+    if json_output {
+        write!(stdout(), "{}", serde_json::to_string(&result).unwrap());
+    }
 }

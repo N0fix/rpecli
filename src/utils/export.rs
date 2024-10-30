@@ -1,3 +1,5 @@
+use std::{collections::{HashMap, HashSet}, ops::{Index, IndexMut}};
+
 use exe::{
     CCharString, ImageDirectoryEntry, ImageExportDirectory, PETranslation, ThunkData,
     ThunkFunctions, VecPE, PE, RVA,
@@ -52,9 +54,16 @@ impl Exports {
             Ok(name) => String::from(name.as_str()?),
             Err(_) => String::new(),
         };
+
+        let mut hm = HashMap::<u16, ExportEntry>::new();
+
         for index in 0u32..s.number_of_functions {
-            let name = |names: &[RVA], index: u32| -> Option<String> {
-                let name_rva = names.get(index as usize)?;
+            let mut idx = index;
+            if ordinals.get(index as usize).is_some() {
+                idx = *ordinals.get(index as usize).unwrap() as u32;
+            }
+            let name = |names: &[RVA], idx: u32| -> Option<String> {
+                let name_rva = names.get(idx as usize)?;
                 let Ok(name_offset) = pe.translate(PETranslation::Memory(*name_rva)) else {
                     return None; /* we continue instead of returning the error to be greedy with parsing */
                 };
@@ -62,7 +71,6 @@ impl Exports {
                 let Ok(name) = pe.get_cstring(name_offset, false, None) else {
                     return None;
                 };
-                // println!("{}", name.len());
 
                 let str = match name.as_str() {
                     Ok(s) => Some(String::from(s)),
@@ -71,7 +79,7 @@ impl Exports {
                 str
             }(names, index);
 
-            let function = functions[index as usize].parse_export(start, end);
+            let function = functions[idx as usize].parse_export(start, end);
 
             let forwarded_name = match function {
                 ThunkData::ForwarderString(rva) => match pe.translate(PETranslation::Memory(rva)) {
@@ -83,20 +91,23 @@ impl Exports {
                 },
                 _ => None,
             };
-
-            export_entries.push(ExportEntry {
+            let exp_entry = ExportEntry {
                 name: name,
-                ordinal: s.base as u16 + index as u16,
+                ordinal: s.base as u16 + idx as u16,
                 rva: match function {
                     ThunkData::ForwarderString(rva) => Some(rva.0),
                     ThunkData::Function(rva) => Some(rva.0),
                     _ => None,
                 },
                 forwarded_name: forwarded_name,
-            });
+            };
+            hm.entry(s.base as u16 + idx as u16).or_insert_with(|| exp_entry);
         }
 
+        export_entries = hm.iter().map(|(_, entry)| entry.clone()).collect();
+
         export_entries.sort_by(|a, b| a.ordinal.cmp(&b.ordinal));
+
 
         Ok(Exports {
             characteristics: s.characteristics,

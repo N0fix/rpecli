@@ -86,7 +86,7 @@ pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
             match &entry.forwarded_name {
                 Some(name) => warn_format!(format!("(Forwarded export) => {}", name)),
                 None => "".normal(),
-            }
+            },
         );
     }
 
