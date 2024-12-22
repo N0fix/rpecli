@@ -53,7 +53,7 @@ pub fn sig_cmd(pe_filepaths: &Vec<String>, json_print: bool) {
             },
         };
         if (json_print) {
-            write!(stdout(), "{}", serde_json::to_string(&sigs).unwrap());
+            write!(stdout(), "{}\n", serde_json::to_string(&sigs).unwrap());
         } else {
             println!("{}", sigs);
         }

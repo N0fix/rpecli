@@ -14,7 +14,7 @@ pub fn rsrc_cmd(pe_filepaths: &Vec<String>, display_hashes: bool, dump: bool, js
         };
         if json {
             let rsrc = Resources::parse(&image);
-            write!(stdout(), "{}", serde_json::to_string(&rsrc.ok()).unwrap());
+            write!(stdout(), "{}\n", serde_json::to_string(&rsrc.ok()).unwrap());
         } else {
             println!("Resources:\n{}", "=".repeat(if true { 80 } else { 0 }));
             display_rsrc(&image, display_hashes);

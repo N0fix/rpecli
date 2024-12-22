@@ -1,3 +1,6 @@
+use std::ffi::OsString;
+use std::path::{Path, PathBuf};
+
 use colored::Colorize;
 use exe::{Address, FileCharacteristics, ImageFileHeader, VecPE, PE};
 
@@ -30,15 +33,15 @@ fn get_type(pe: &VecPE) -> &str {
 
 pub fn info_cmd(pe_filepaths: &Vec<String>, display_hashes: bool) {
     for file in pe_filepaths {
-        display_info(file.as_str(), display_hashes);
+        display_info(file, display_hashes);
     }
 }
 
-fn display_info(pe_filepath: &str, display_hashes: bool) {
-    let Ok(image) = VecPE::from_disk_file(pe_filepath) else {
+fn display_info(pe_filepath: &String, display_hashes: bool) {
+    let Ok(image) = VecPE::from_disk_file(&pe_filepath) else {
         println!(
             "{}",
-            alert_format!(format!("Could not read {}", pe_filepath))
+            alert_format!(format!("Could not read {:?}", pe_filepath))
         );
         return;
     };

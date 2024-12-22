@@ -76,7 +76,6 @@ impl<'pe> ReadFrom<'pe> for CodeView<'pe> {
 }
 
 impl<'a> CodeView<'a> {
-
     pub fn pdb_file_name(&self) -> &'a str {
         match self {
             CodeView::Cv20 { pdb_file_name, .. } => pdb_file_name,

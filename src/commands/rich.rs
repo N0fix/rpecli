@@ -19,7 +19,7 @@ struct RichInformation {
     table: RichTable,
 }
 pub fn rich_cmd(pe_filepaths: &Vec<String>, json_output: bool) {
-    let mut r = vec![];
+    // let mut r = vec![];
 
     let mut x: Vec<RichInformation> = vec![];
 
@@ -31,27 +31,28 @@ pub fn rich_cmd(pe_filepaths: &Vec<String>, json_output: bool) {
         // println!("Rich:\n{}", "=".repeat(if true { 80 } else { 0 }));
         let richs = RichTable::parse(&image);
         // display_rich(&image);
-        // if ! json_output {
-        // write!(stdout(), "{}", serde_json::to_string(&x).unwrap());
-        // write!(stdout(), "{}\n{}\n", file, &richs);
-        // } else {
-        x.push(RichInformation {
-            filename: file.to_owned(),
-            table: richs.clone(),
-        });
-        // }
+        if json_output {
+            write!(stdout(), "{}\n", serde_json::to_string(&richs).unwrap());
+            // write!(stdout(), "{}\n{}\n", file, &richs);
+        } else {
+            write!(stdout(), "{}\n", richs);
+        // x.push(RichInformation {
+        //     filename: file.to_owned(),
+        //     table: richs.clone(),
+        // });
+        }
         // let path = Path::new(file).file_name().unwrap();
-        r.push(richs.clone());
+        // r.push(richs.clone());
     }
-    let sorted_map = RichTable::compare(r);
-    for (str, cnt) in sorted_map.iter() {
-        println!(
-            "{:6.2}% : {}",
-            (*cnt as f32 / pe_filepaths.len() as f32) * 100.0,
-            str
-        );
-    }
-    if json_output {
-        write!(stdout(), "{}", serde_json::to_string(&x).unwrap());
-    }
+    // let sorted_map = RichTable::compare(r);
+    // for (str, cnt) in sorted_map.iter() {
+        // println!(
+            // "{:6.2}% : {}",
+            // (*cnt as f32 / pe_filepaths.len() as f32) * 100.0,
+            // str
+        // );
+    // }
+    // if json_output {
+    //     write!(stdout(), "{}\n", serde_json::to_string(&x).unwrap());
+    // }
 }

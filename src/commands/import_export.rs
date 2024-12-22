@@ -4,14 +4,14 @@ use crate::utils::import::Imports;
 use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 use colored::Colorize;
 use exe::{FileCharacteristics, VecPE, PE};
+use serde::{Deserialize, Serialize};
 use std::io::{stdout, Write};
 use std::path::Path;
-use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct FileExport {
     name: String,
-    exports: Option<Exports>
+    exports: Option<Exports>,
 }
 
 fn display_import_export(pe_filepath: &str) {
@@ -68,7 +68,7 @@ pub fn import_cmd(pe_filepaths: &Vec<String>, json_output: bool) {
                 panic!("{}", alert_format!(format!("Could not read {}", file)));
             };
             let imp = Imports::parse(&image);
-            write!(stdout(), "{}", serde_json::to_string(&imp.ok()).unwrap());
+            write!(stdout(), "{}\n", serde_json::to_string(&imp.ok()).unwrap());
         } else {
             display_imports(file);
         }
@@ -87,21 +87,18 @@ pub fn export_cmd(pe_filepaths: &Vec<String>, json_output: bool) {
                 Some(name) => name,
                 None => {
                     eprintln!("{} is not a file", file);
-                    continue
-                },
+                    continue;
+                }
             };
             let exp = Exports::parse(&image);
-            result.push(FileExport{
-                name: filename.to_str().unwrap().to_string(),
-                exports: exp.ok(),
-            });
+            // result.push(FileExport {
+                // name: filename.to_str().unwrap().to_string(),
+                // exports: exp.ok(),
+            // });
 
-            // write!(stdout(), "{}", serde_json::to_string(&exp.ok()).unwrap());
+            write!(stdout(), "{}\n", serde_json::to_string(&exp.ok()).unwrap());
         } else {
             display_exports(file);
         }
-    }
-    if json_output {
-        write!(stdout(), "{}", serde_json::to_string(&result).unwrap());
     }
 }

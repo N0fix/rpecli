@@ -1,4 +1,7 @@
-use std::{collections::{HashMap, HashSet}, ops::{Index, IndexMut}};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::{Index, IndexMut},
+};
 
 use exe::{
     CCharString, ImageDirectoryEntry, ImageExportDirectory, PETranslation, ThunkData,
@@ -41,7 +44,7 @@ impl Exports {
         let end = RVA(start.0 + directory.size);
         let s = ImageExportDirectory::parse(pe)?;
         let functions = s.get_functions(pe)?;
-        let names = match s.get_names(pe){
+        let names = match s.get_names(pe) {
             Ok(e) => e,
             Err(e) => &[],
         };
@@ -101,13 +104,13 @@ impl Exports {
                 },
                 forwarded_name: forwarded_name,
             };
-            hm.entry(s.base as u16 + idx as u16).or_insert_with(|| exp_entry);
+            hm.entry(s.base as u16 + idx as u16)
+                .or_insert_with(|| exp_entry);
         }
 
         export_entries = hm.iter().map(|(_, entry)| entry.clone()).collect();
 
         export_entries.sort_by(|a, b| a.ordinal.cmp(&b.ordinal));
-
 
         Ok(Exports {
             characteristics: s.characteristics,

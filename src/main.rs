@@ -1,3 +1,8 @@
+use std::ffi::OsString;
+use std::path::{Path, PathBuf};
+use std::process::exit;
+
+use clap::error::ContextValue;
 use clap::{Parser, Subcommand};
 use commands::test_exp::test_cmd;
 mod commands;
@@ -60,7 +65,7 @@ struct PEArgs {
     /// Output as json
     #[clap(short, long)]
     json: bool,
-    #[clap(required = true, value_delimiter = ' ', num_args = 1..)]
+    #[clap(required = true, num_args = 1..)]
     pe: Vec<String>,
 }
 
@@ -69,7 +74,7 @@ struct RichArg {
     /// Output as json
     #[clap(short, long)]
     json: bool,
-    #[clap(required = true, value_delimiter = ' ', num_args = 1..)]
+    #[clap(required = true, num_args = 1..)]
     pe: Vec<String>,
 }
 
@@ -81,7 +86,7 @@ struct DisassArg {
 
 #[derive(Parser, Debug)]
 struct RsrcArg {
-    #[clap(required = true, value_delimiter = ' ', num_args = 1..)]
+    #[clap(required = true, num_args = 1..)]
     pe: Vec<String>,
     /// Dump resources to <temp dir>/resources/
     #[clap(short, long)]
@@ -93,7 +98,41 @@ struct RsrcArg {
 
 fn main() {
     // let args = Cli::parse();
-    let args = Arguments::parse();
+    let args = match Arguments::try_parse() {
+        Ok(args) => args,
+        Err(e) => {
+            let x = match e.kind() {
+                clap::error::ErrorKind::MissingRequiredArgument => {
+                    let x: Vec<&ContextValue> = e.context().map(|(kind, val)| val).collect();
+                    let has_missing_pe = x.iter().any(|x| &x.to_string() == "<PE>...");
+
+                    if ! has_missing_pe {
+                        eprintln!("{:#}", e);
+                        exit(1);
+                    }
+                    let mut args: Vec<OsString> = std::env::args_os().collect();
+                    loop {
+                        let mut buffer = String::new();
+
+                        std::io::stdin().read_line(&mut buffer).unwrap();
+                        let line = buffer.trim();
+                        if line.is_empty() {
+                            break;
+                        }
+                        let osstring: OsString = line.to_string().into();
+                        args.push(osstring);
+                    }
+                    Arguments::parse_from(args)
+                }
+                _ => {
+                    eprintln!("{:#}", e);
+                    exit(1);
+                }
+            };
+            x
+        }
+    };
+    
     // println!("{args:#?}");
     match args.cmd {
         SubCommand::Info(subcommand_args) => {
