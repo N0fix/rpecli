@@ -12,11 +12,11 @@ use term_table::table_cell::TableCell;
 use term_table::Table;
 #[macro_use]
 use crate::{color_format_if, alert_format, warn_format, alert_format_if, warn_format_if};
-use crate::util::{round_to_pe_sz, round_to_pe_sz_with_offset, safe_read};
+use crate::util::{round_to_pe_sz, round_to_pe_sz_with_offset, safe_read, CChar_to_escaped_string};
 
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq, PartialOrd)]
 pub struct Section<'data> {
-    name: &'data str,
+    name: String,
     virt_addr: u32,
     virt_size: u32,
     raw_addr: u32,
@@ -38,7 +38,10 @@ impl Section<'_> {
                     let section_data = safe_read(pe, data_offset, data_size);
 
                     result.sections.push(Section {
-                        name: sec.name.as_str().unwrap(),
+                        name: match sec.name.as_str() {
+                            Ok(s) => s.to_string(),
+                            Err(_) => CChar_to_escaped_string(&sec.name),
+                        },
                         virt_addr: sec.virtual_address.0,
                         virt_size: sec.virtual_size,
                         raw_addr: sec.pointer_to_raw_data.0,
@@ -59,7 +62,7 @@ impl Section<'_> {
 #[derive(Default, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct SectionTable<'data> {
     #[serde(borrow)]
-    sections: Vec<Section<'data>>,
+    pub sections: Vec<Section<'data>>,
 }
 
 bitflags! {
@@ -188,7 +191,7 @@ impl Display for SectionTable<'_> {
             let entropy = shannon_entropy(section.data);
             table.add_row(Row::new(vec![
                 TableCell::new_with_alignment(
-                    section.name,
+                    section.name.clone(),
                     1,
                     term_table::table_cell::Alignment::Left,
                 ),

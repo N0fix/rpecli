@@ -12,6 +12,13 @@ pub fn disass_section(pe_filepath: &String, section_name: &str) {
         return;
     };
     if let Ok(section) = pe.get_section_by_name(section_name) {
-        disassemble_bytes(section.read(&pe).unwrap(), 0, u32::MAX)
+        let bitness = match pe
+            .get_arch()
+            .expect("Couldn't read target PE target architecture")
+        {
+            exe::Arch::X86 => 32u32,
+            exe::Arch::X64 => 64u32,
+        };
+        disassemble_bytes(section.read(&pe).unwrap(), bitness, 0, u32::MAX)
     }
 }

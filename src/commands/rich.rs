@@ -36,21 +36,21 @@ pub fn rich_cmd(pe_filepaths: &Vec<String>, json_output: bool) {
             // write!(stdout(), "{}\n{}\n", file, &richs);
         } else {
             write!(stdout(), "{}\n", richs);
-        // x.push(RichInformation {
-        //     filename: file.to_owned(),
-        //     table: richs.clone(),
-        // });
+            // x.push(RichInformation {
+            //     filename: file.to_owned(),
+            //     table: richs.clone(),
+            // });
         }
         // let path = Path::new(file).file_name().unwrap();
         // r.push(richs.clone());
     }
     // let sorted_map = RichTable::compare(r);
     // for (str, cnt) in sorted_map.iter() {
-        // println!(
-            // "{:6.2}% : {}",
-            // (*cnt as f32 / pe_filepaths.len() as f32) * 100.0,
-            // str
-        // );
+    // println!(
+    // "{:6.2}% : {}",
+    // (*cnt as f32 / pe_filepaths.len() as f32) * 100.0,
+    // str
+    // );
     // }
     // if json_output {
     //     write!(stdout(), "{}\n", serde_json::to_string(&x).unwrap());

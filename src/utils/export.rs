@@ -9,6 +9,8 @@ use exe::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::util::{ByteBuf, CChar_to_escaped_string};
+
 #[derive(Serialize, Deserialize, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct ExportEntry {
     pub name: Option<String>,
@@ -54,7 +56,10 @@ impl Exports {
         };
 
         let export_name = match s.get_name(pe) {
-            Ok(name) => String::from(name.as_str()?),
+            Ok(name) => match name.as_str() {
+                Ok(s) => String::from(s),
+                Err(_) => CChar_to_escaped_string(name),
+            },
             Err(_) => String::new(),
         };
 
@@ -77,7 +82,7 @@ impl Exports {
 
                 let str = match name.as_str() {
                     Ok(s) => Some(String::from(s)),
-                    Err(_) => None,
+                    Err(_) => Some(CChar_to_escaped_string(name)),
                 };
                 str
             }(names, index);

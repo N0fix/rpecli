@@ -1,4 +1,5 @@
 use crate::import_export;
+use crate::util::FileInfo;
 use crate::utils::export::Exports;
 use crate::utils::import::Imports;
 use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
@@ -91,12 +92,16 @@ pub fn export_cmd(pe_filepaths: &Vec<String>, json_output: bool) {
                 }
             };
             let exp = Exports::parse(&image);
+            let f = FileInfo {
+                input_filename: file.clone(),
+                info: exp.ok(),
+            };
             // result.push(FileExport {
-                // name: filename.to_str().unwrap().to_string(),
-                // exports: exp.ok(),
+            // name: filename.to_str().unwrap().to_string(),
+            // exports: exp.ok(),
             // });
 
-            write!(stdout(), "{}\n", serde_json::to_string(&exp.ok()).unwrap());
+            write!(stdout(), "{}\n", serde_json::to_string(&f).unwrap());
         } else {
             display_exports(file);
         }

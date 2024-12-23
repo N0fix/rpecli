@@ -17,11 +17,10 @@ This method produces the following output:
 00007FFAC46ACDE0 33FF                 xor       edi,edi
 */
 #[allow(dead_code)]
-pub(crate) fn disassemble_bytes(bytes: &[u8], offset: usize, max_instr: u32) {
+pub(crate) fn disassemble_bytes(bytes: &[u8], bitness: u32, offset: usize, max_instr: u32) {
     let bytes = &bytes[offset..];
     const HEXBYTES_COLUMN_BYTE_LENGTH: usize = 12;
-    let arch = 64;
-    let mut decoder = Decoder::with_ip(arch, bytes, 0, DecoderOptions::NONE);
+    let mut decoder = Decoder::with_ip(bitness, bytes, 0, DecoderOptions::NONE);
 
     // Formatters: Masm*, Nasm*, Gas* (AT&T) and Intel* (XED).
     // For fastest code, see `SpecializedFormatter` which is ~3.3x faster. Use it if formatting

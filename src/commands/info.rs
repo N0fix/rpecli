@@ -100,8 +100,13 @@ fn display_info(pe_filepath: &String, display_hashes: bool) {
         "Code at entrypoint:\n{}",
         "=".repeat(if true { 80 } else { 0 })
     );
+    let bitness = match arch {
+        exe::Arch::X86 => 32u32,
+        exe::Arch::X64 => 64u32,
+    };
     disassemble_bytes(
         image.get_buffer().as_ref(),
+        bitness,
         entrypoint.as_offset(&image).unwrap().0 as usize,
         10,
     );

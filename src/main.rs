@@ -106,7 +106,7 @@ fn main() {
                     let x: Vec<&ContextValue> = e.context().map(|(kind, val)| val).collect();
                     let has_missing_pe = x.iter().any(|x| &x.to_string() == "<PE>...");
 
-                    if ! has_missing_pe {
+                    if !has_missing_pe {
                         eprintln!("{:#}", e);
                         exit(1);
                     }
@@ -132,11 +132,15 @@ fn main() {
             x
         }
     };
-    
+
     // println!("{args:#?}");
     match args.cmd {
         SubCommand::Info(subcommand_args) => {
-            info_cmd(&subcommand_args.pe, !args.no_hash);
+            if subcommand_args.json {
+                test_cmd(&subcommand_args.pe);
+            } else {
+                info_cmd(&subcommand_args.pe, !args.no_hash);
+            }
         }
         SubCommand::ImportExport(subcommand_args) => {
             import_export_cmd(&subcommand_args.pe);

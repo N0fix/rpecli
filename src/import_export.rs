@@ -1,3 +1,4 @@
+use crate::util::{ByteBuf, CChar_to_escaped_string};
 use crate::utils::export::Exports;
 use crate::utils::import::Imports;
 // use crate::utils::import::Imports;
@@ -57,15 +58,21 @@ pub fn display_exports(pe: &VecPE) -> Result<(), exe::Error> {
     if let Ok(name) = export_table.get_name(pe) {
         let export_bin_name = match name.as_str() {
             Ok(s) => String::from(s),
-            Err(_) => "Invalid non ASCII export binary name".red().to_string(),
+            Err(e) => CChar_to_escaped_string(name),
         };
         print!("\n\"{}\" => ", export_bin_name.bold());
     }
-
-    let Ok(exports) = Exports::parse(pe) else {
-        println!("\n\t{}", "Invalid export table".red());
-        return Ok(());
+    let exports = match Exports::parse(pe) {
+        Ok(o) => o,
+        Err(e) => {
+            println!("{}", e);
+            return Ok(());
+        }
     };
+    // let Ok(exports) = Exports::parse(pe) else {
+    //     println!("\n\t{}", "Invalid export table".red());
+    //     return Ok(());
+    // };
 
     // let mut exphash_results = Vec::<String>::new();
 

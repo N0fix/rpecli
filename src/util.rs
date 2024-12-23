@@ -1,8 +1,30 @@
 use std::{error::Error, u64::MAX};
 
-use exe::{ImageSubsystem, VecPE, PE};
-
 use crate::utils::pe_size::get_pe_file_size;
+use exe::{CChar, ImageSubsystem, VecPE, PE};
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct FileInfo<T> {
+    pub input_filename: String,
+    pub info: T,
+}
+
+pub fn CChar_to_escaped_string(val: &[CChar]) -> String {
+    let bytes: Vec<u8> = val.iter().map(|x| x.0).collect();
+    bytes.escape_ascii().to_string()
+}
+
+pub struct ByteBuf<'a>(pub &'a [u8]);
+
+impl<'a> std::fmt::LowerHex for ByteBuf<'a> {
+    fn fmt(&self, fmtr: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        for byte in self.0 {
+            fmtr.write_fmt(format_args!("{:02x}", byte))?;
+        }
+        Ok(())
+    }
+}
 
 pub fn round_to_pe_sz(pe: &VecPE, value: usize) -> usize {
     usize::min(value, get_pe_file_size(pe))
