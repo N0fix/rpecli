@@ -55,9 +55,15 @@ impl PeTrait for PEForParsing {
                 return Ok(None);
             }
         };
+        // security_dir.virtual_address.0 as usize..security_dir.virtual_address.0.checked_add(security_dir.size)
+        let end_range = match security_dir.virtual_address.0.checked_add(security_dir.size) {
+            Some(r) => r,
+            None => {
+                return Err(authenticode::PeOffsetError)
+            },
+        };
         Ok(Some(
-            security_dir.virtual_address.0 as usize
-                ..(security_dir.virtual_address.0 + security_dir.size) as usize,
+            security_dir.virtual_address.0 as usize..end_range as usize
         ))
     }
 

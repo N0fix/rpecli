@@ -2,7 +2,7 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
-use exe::{Address, FileCharacteristics, ImageFileHeader, VecPE, PE};
+use exe::{Address, FileCharacteristics, ImageFileHeader, Offset, VecPE, PE, RVA};
 
 use crate::disassembler::disass::disassemble_bytes;
 use crate::import_export::{display_exports, display_imports};
@@ -16,7 +16,7 @@ use crate::utils::timestamps::format_timestamp;
 use crate::{alert_format, alert_format_if, color_format_if, warn_format, warn_format_if};
 
 use crate::utils::hash;
-use crate::utils::tls::display_tls;
+use crate::utils::tls::{TLSCallbacks};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use human_bytes::human_bytes;
 
@@ -104,12 +104,16 @@ fn display_info(pe_filepath: &String, display_hashes: bool) {
         exe::Arch::X86 => 32u32,
         exe::Arch::X64 => 64u32,
     };
-    disassemble_bytes(
-        image.get_buffer().as_ref(),
-        bitness,
-        entrypoint.as_offset(&image).unwrap().0 as usize,
-        10,
-    );
+    if let Ok(ep) = entrypoint.as_offset(&image) {
+        disassemble_bytes(
+            image.get_buffer().as_ref(),
+            bitness,
+            ep.0 as usize,
+            10,
+        );
+    } else {
+        println!("Invalid entrypoint: {:#x}", entrypoint.0);
+    }
     println!("");
     println!("Signature:\n{}", "=".repeat(if true { 80 } else { 0 }));
 
@@ -141,5 +145,33 @@ fn display_info(pe_filepath: &String, display_hashes: bool) {
 
     println!("");
     println!("TLS callbacks:\n{}", "=".repeat(if true { 80 } else { 0 }));
-    display_tls(&image);
+    // display_tls(&image);
+    if TLSCallbacks::check_exists(&image) {
+        match TLSCallbacks::parse(&image) {
+            Ok(cb) => match cb {
+                Some(callbacks) => {
+                    for c in callbacks.callbacks.iter() {
+                        println!("{:#x}", c);
+                    }
+                },
+                None => {},
+            },
+            Err(e) => match e {
+                exe::Error::OutOfBounds(_, _) => {
+                    println!("OOB");
+                },
+                exe::Error::BadAlignment => {
+                    println!("Bad alignement");
+                },
+                exe::Error::BadDirectory(image_directory_entry) => {
+                    println!("Bad directory entry");
+                },
+                _ => {
+                    println!("Unknown error with TLS directory");    
+                }
+            },
+        }
+    } else {
+        println!("No TLS directory")
+    }
 }

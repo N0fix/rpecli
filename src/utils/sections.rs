@@ -174,20 +174,20 @@ impl Display for SectionTable<'_> {
             ),
         ]));
 
+        println!(
+            "{:^9} {:>10} {:>10} {:>9} {:>9} {:>8} {:^32}     {:>15}",
+            "Name".bold(),
+            "VirtAddr".bold(),
+            "VirtSize".bold(),
+            "RawAddr".bold(),
+            "RawSize".bold(),
+            "Entropy".bold(),
+            "md5".bold(),
+            "Characteristics".bold(),
+        );
         for section in &self.sections {
             // Ok(sections) => {
-            // println!(
-            //     "{:^9} {:>10} {:>10} {:>9} {:>9} {:>8} {:^32}     {:>15}",
-            //     "Name".bold(),
-            //     "VirtAddr".bold(),
-            //     "VirtSize".bold(),
-            //     "RawAddr".bold(),
-            //     "RawSize".bold(),
-            //     "Entropy".bold(),
-            //     "md5".bold(),
-            //     "Characteristics".bold(),
-            // );
-            let section_hash = format!("{:?}", md5::compute(section.data));
+            // let section_hash = format!("{:?}", md5::compute(section.data));
             let entropy = shannon_entropy(section.data);
             table.add_row(Row::new(vec![
                 TableCell::new_with_alignment(
@@ -226,11 +226,11 @@ impl Display for SectionTable<'_> {
                     1,
                     term_table::table_cell::Alignment::Right,
                 ),
-                TableCell::new_with_alignment(
-                    section_hash,
-                    1,
-                    term_table::table_cell::Alignment::Right,
-                ),
+                // TableCell::new_with_alignment(
+                //     section_hash,
+                //     1,
+                //     term_table::table_cell::Alignment::Right,
+                // ),
                 TableCell::new_with_alignment(
                     format!(
                         "{:X} ({:?})",
@@ -247,22 +247,25 @@ impl Display for SectionTable<'_> {
                     term_table::table_cell::Alignment::Left,
                 ),
             ]));
-            // println!(
-            //     "{:9} {:>#10x} {:>#10x} {:>#9x} {:>#9x}   {:>6.2}  {:x}    {:>15x} ({:?}) ",
-            //     section.name.as_str().unwrap(),
-            //     // section.characteristics.bits(),
-            //     section.virtual_address.0,
-            //     section.virtual_size,
-            //     section.pointer_to_raw_data.0,
-            //     section.size_of_raw_data,
-            //     shannon_entropy(section.read(pe).unwrap()),
-            //     md5::compute(section.read(pe).unwrap()),
-            //     section.characteristics.bits(),
-            //     section.characteristics
-            //         & (SectionCharacteristics::MEM_EXECUTE
-            //             | SectionCharacteristics::MEM_READ
-            //             | SectionCharacteristics::MEM_WRITE)
-            // );
+            
+            println!(
+                "{:9} {:>#10x} {:>#10x} {:>#9x} {:>#9x}   {:>6.2}      {:>15x} ({:?}) ",
+                section.name.as_str(),
+                // section.characteristics.bits(),
+                section.virt_addr,
+                section.virt_size,
+                section.raw_addr,
+                section.raw_size,
+                entropy,
+                // shannon_entropy(section.read(pe).unwrap()),
+                // md5::compute(section.read(pe).unwrap()),
+                section.characteristics,
+                SectionCharacteristics::from_bits(section.characteristics).unwrap().0
+                // section.characteristics
+                    // & (SectionCharacteristics::MEM_EXECUTE
+                        // | SectionCharacteristics::MEM_READ
+                        // | SectionCharacteristics::MEM_WRITE)
+            );
             // }
             // Err(_) => panic!("Could not parse section table ! Is your file a PE file?"),
         }
@@ -270,7 +273,7 @@ impl Display for SectionTable<'_> {
             .or_else(|| Some((4000, 4000)))
             .unwrap()
             .0;
-        writeln!(f, "{}", table.render())?;
+        // writeln!(f, "{}", table.render())?;
 
         Ok(())
     }

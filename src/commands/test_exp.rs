@@ -1,7 +1,7 @@
 use crate::{
     alert_format, alert_format_if, color_format_if,
     utils::{
-        self, debug::DebugEntries, export::{pexp, Exports}, import::{pimp, Imports}, rich::RichTable, rich_headers::rich_utils::RichRecord, sections::{Section, SectionTable}
+        self, debug::DebugEntries, export::{pexp, Exports}, import::{pimp, Imports}, rich::RichTable, rich_headers::rich_utils::RichRecord, rsrc::Resources, sections::{Section, SectionTable}, sig::PeAuthenticodes, tls::TLSCallbacks
     },
     warn_format, warn_format_if,
 };
@@ -48,12 +48,12 @@ struct FileDescription<'a> {
     #[serde(borrow)]
     pub sections: Vec<Section<'a>>,
     pub rich: Option<Vec<RichRecord>>,
-    //sig
+    pub sig: Option<PeAuthenticodes>,
     pub imports: Option<Imports>,
     pub exports: Option<Exports>,
     pub dbg: Option<DebugEntries>,
-    // rsrc
-    // tls
+    pub rsrc: Option<Resources>,
+    pub tls: Option<TLSCallbacks>,
 }
 
 pub fn test_cmd(pe_filepaths: &Vec<String>) {
@@ -61,11 +61,8 @@ pub fn test_cmd(pe_filepaths: &Vec<String>) {
 
     for file in pe_filepaths {
         let Ok(image) = VecPE::from_disk_file(file) else {
-            // println!("{}", alert_format!(format!("Could not read {}", file)));
-            // panic!("");
             continue;
         };
-        // println!("{}", file);
         let rich_entries = RichTable::parse(&image).rich_entries;
         let file_desc = FileDescription {
             filename: file.to_string(),
@@ -75,77 +72,18 @@ pub fn test_cmd(pe_filepaths: &Vec<String>) {
                 sz => Some(rich_entries),
             },
             dbg: DebugEntries::parse(&image).ok(),
+            sig: PeAuthenticodes::parse(&image).ok(),
             imports: pimp(&image),
             exports: pexp(&image),
+            rsrc: match Resources::parse(&image).ok() {
+                Some(r) => r,
+                None => None,
+            },
+            tls: match TLSCallbacks::parse(&image).ok() {
+                Some(t) => t,
+                None => None,
+            }
         };
         write!(stdout(), "{}\n", serde_json::to_string(&file_desc).unwrap());
     }
-    // println!("{}", serde_json::to_string(&x).unwrap());
-
-    // let mut x: Vec<FilesImport> = vec![];
-
-    // for file in pe_filepaths {
-    //     let Ok(image) = VecPE::from_disk_file(file) else {
-    //         // println!("{}", alert_format!(format!("Could not read {}", file)));
-    //         // panic!("");
-    //         continue;
-    //     };
-    //     // println!("{}", file);
-
-    //     x.push(FilesImport {
-    //         filename: file.to_owned(),
-    //         imports: ,
-    //     });
-    // }
-    // println!("{}", serde_json::to_string(&x).unwrap());
-
-    // let mut x: Vec<FilesRich> = vec![];
-    // for file in pe_filepaths {
-    //     let Ok(image) = VecPE::from_disk_file(file) else {
-    //         // println!("{}", alert_format!(format!("Could not read {}", file)));
-    //         // panic!("");
-    //         continue;
-    //     };
-    //     // println!("{}", file);
-
-    //     x.push(FilesRich {
-    //         filename: file.to_owned(),
-    //         rich: RichTable::parse(&image),
-    //     });
-    // }
-    // println!("{}", serde_json::to_string(&x).unwrap());
-
-    // for file in pe_filepaths {
-    //     let mut x: Vec<FilesSection> = vec![];
-    //     let Ok(image) = VecPE::from_disk_file(file) else {
-    //         // println!("{}", alert_format!(format!("Could not read {}", file)));
-    //         // panic!("");
-    //         continue;
-    //     };
-    //     // println!("{}", file);
-    //     x.push(FilesSection {
-    //         filename: file.to_owned(),
-    //         section: Section::parse(&image),
-    //     });
-    //     println!("{}", serde_json::to_string(&x).unwrap());
-    // }
-
-    // let mut x: Vec<FilesDebug> = vec![];
-    // for file in pe_filepaths {
-    //     let Ok(image) = VecPE::from_disk_file(file) else {
-    //         // println!("{}", alert_format!(format!("Could not read {}", file)));
-    //         // panic!("");
-    //         continue;
-    //     };
-    //     match DebugEntries::parse(&image) {
-    //         Ok(dbg) => x.push(FilesDebug {
-    //             filename: file.to_owned(),
-    //             dbg: dbg,
-    //         }),
-    //         Err(_) => {}
-    //     };
-    //     // println!("{}", file);
-
-    //     println!("{}", serde_json::to_string(&x).unwrap());
-    // }
 }

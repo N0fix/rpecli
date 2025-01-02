@@ -51,10 +51,14 @@ pub struct Resources {
     pub resources: Vec<ResourceEntry>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct RsrcDirectory {
+
+}
+
 impl Resources {
     pub fn parse<'data, P: PE>(pe: &'data P) -> Result<Option<Resources>, exe::Error> {
         if !pe.has_data_directory(ImageDirectoryEntry::Resource) {
-            println!("No resource dirctory");
             return Ok(None);
         }
         let rsrc = ResourceDirectory::parse(pe)?;
@@ -99,11 +103,6 @@ impl Resources {
                 }
                 Err(_) => {}
             };
-
-            // println!(
-            // "Resource timestamp: {}",
-            // format_timestamp(root_node.directory.time_date_stamp as i64)
-            // );
 
             result.resources.push(resource_entry);
         }

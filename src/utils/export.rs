@@ -43,7 +43,7 @@ impl Exports {
         let mut export_entries: Vec<ExportEntry> = vec![];
         let directory = pe.get_data_directory(ImageDirectoryEntry::Export)?;
         let start = directory.virtual_address.clone();
-        let end = RVA(start.0 + directory.size);
+        let end = RVA(start.0.checked_add(directory.size).unwrap_or(0xFFFFFFFF));
         let s = ImageExportDirectory::parse(pe)?;
         let functions = s.get_functions(pe)?;
         let names = match s.get_names(pe) {
@@ -55,12 +55,19 @@ impl Exports {
             Err(_) => &[],
         };
 
-        let export_name = match s.get_name(pe) {
-            Ok(name) => match name.as_str() {
-                Ok(s) => String::from(s),
-                Err(_) => CChar_to_escaped_string(name),
+        // let export_name = match s.get_name(pe) {
+        //     Ok(name) => match name.as_str() {
+        //         Ok(s) => String::from(s),
+        //         Err(_) => CChar_to_escaped_string(name),
+        //     },
+        //     Err(e) => String::from(format!("OOB{}", e)),
+        // };
+        let export_name = match pe.translate(PETranslation::Memory(s.name)) {
+            Err(e) => return Err(e),
+            Ok(a) => match pe.get_cstring(a, false, None) {
+                Ok(s) => CChar_to_escaped_string(s),
+                Err(_) => String::new(),
             },
-            Err(_) => String::new(),
         };
 
         let mut hm = HashMap::<u16, ExportEntry>::new();
